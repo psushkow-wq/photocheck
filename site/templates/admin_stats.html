@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Статистика — PhotoAuth Admin{% endblock %}
+{% block head %}
+<style>
+.admin-wrap { max-width: 900px; margin: 0 auto; padding: 32px 16px; }
+.admin-title { font-size: 24px; font-weight: 800; margin-bottom: 24px; }
+.grid4 { display: grid; grid-template-columns: repeat(auto-fit,minmax(160px,1fr)); gap: 12px; margin-bottom: 24px; }
+.stat-box {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px; text-align: center;
+}
+.stat-num { font-size: 32px; font-weight: 800; font-family: var(--font-mono); color: var(--accent); }
+.stat-lbl { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.section { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+.section h3 { font-size: 14px; font-weight: 700; color: var(--muted); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 1px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { color: var(--muted); text-align: left; padding: 6px 0; font-weight: 600; border-bottom: 1px solid var(--border); }
+td { padding: 8px 0; border-bottom: 1px solid var(--border); color: var(--text); }
+tr:last-child td { border-bottom: none; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="admin-wrap">
+  <div class="admin-title">📊 Статистика сайта</div>
+
+  <div class="grid4">
+    <div class="stat-box">
+      <div class="stat-num">{{ stats.total_visits or 0 }}</div>
+      <div class="stat-lbl">Всего посещений</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">{{ visits_today }}</div>
+      <div class="stat-lbl">Сегодня</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">{{ visits_week }}</div>
+      <div class="stat-lbl">За 7 дней</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">{{ users_count }}</div>
+      <div class="stat-lbl">Пользователей</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">{{ analyses_count }}</div>
+      <div class="stat-lbl">Анализов</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Популярные страницы</h3>
+    <table>
+      <tr><th>Страница</th><th>Посещений</th></tr>
+      {% for p in top_pages %}
+      <tr><td>{{ p.path }}</td><td style="font-family:var(--font-mono);color:var(--accent)">{{ p.cnt }}</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div class="section">
+    <h3>Новые пользователи</h3>
+    <table>
+      <tr><th>Имя</th><th>Email</th><th>Дата</th><th>Проверок</th></tr>
+      {% for u in recent_users %}
+      <tr>
+        <td>{{ u.name }}</td>
+        <td style="color:var(--muted)">{{ u.email }}</td>
+        <td style="font-family:var(--font-mono);font-size:11px">{{ u.created_at[:10] }}</td>
+        <td style="font-family:var(--font-mono);color:var(--accent)">{{ u.analyses_count }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+{% endblock %}

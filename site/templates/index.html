@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+{% block title %}PhotoAuth — Проверка подлинности фотографий{% endblock %}
+
+{% block head %}
+<style>
+/* Hero */
+.hero {
+  min-height: 90vh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 60px 24px;
+  position: relative; overflow: hidden;
+}
+
+.hero-glow {
+  position: absolute; top: -200px; left: 50%; transform: translateX(-50%);
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(61,111,255,0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(61,111,255,0.1); border: 1px solid rgba(61,111,255,0.3);
+  border-radius: 20px; padding: 6px 14px; font-size: 13px;
+  color: var(--accent2); margin-bottom: 28px; font-family: var(--font-mono);
+}
+.hero-badge-dot {
+  width: 6px; height: 6px; background: var(--accent);
+  border-radius: 50%; animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+.hero h1 {
+  font-size: clamp(36px, 7vw, 72px);
+  font-weight: 800; line-height: 1.1;
+  letter-spacing: -2px; margin-bottom: 20px;
+  max-width: 800px;
+}
+
+.hero h1 span {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--purple) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+
+.hero-sub {
+  font-size: clamp(15px, 2vw, 19px); color: var(--muted);
+  max-width: 540px; margin-bottom: 40px; font-weight: 400;
+}
+
+.hero-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.btn-primary {
+  background: var(--accent); color: white; text-decoration: none;
+  padding: 14px 28px; border-radius: 10px; font-size: 15px; font-weight: 700;
+  transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px;
+}
+.btn-primary:hover { background: var(--accent2); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(61,111,255,0.3); }
+.btn-secondary {
+  background: var(--card); color: var(--text); text-decoration: none;
+  padding: 14px 28px; border-radius: 10px; font-size: 15px; font-weight: 600;
+  border: 1px solid var(--border2); transition: all 0.2s;
+}
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Stats bar */
+.stats-bar {
+  display: flex; gap: 40px; justify-content: center;
+  margin-top: 60px; flex-wrap: wrap;
+}
+.stat-item { text-align: center; }
+.stat-num {
+  font-size: 28px; font-weight: 800; font-family: var(--font-mono);
+  color: var(--accent);
+}
+.stat-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* Features */
+.section { padding: 80px 24px; max-width: 1100px; margin: 0 auto; }
+.section-tag {
+  font-family: var(--font-mono); font-size: 12px; color: var(--accent);
+  letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px;
+}
+.section-title {
+  font-size: clamp(28px, 4vw, 42px); font-weight: 800;
+  letter-spacing: -1px; margin-bottom: 16px;
+}
+.section-sub { font-size: 16px; color: var(--muted); max-width: 500px; }
+
+.features-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px; margin-top: 48px;
+}
+.feature-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 24px;
+  transition: all 0.3s; cursor: default;
+}
+.feature-card:hover {
+  border-color: var(--border2); transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.3);
+}
+.feature-icon {
+  width: 48px; height: 48px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; margin-bottom: 16px;
+}
+.feature-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+.feature-desc { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+/* How it works */
+.steps { display: flex; flex-direction: column; gap: 0; margin-top: 48px; }
+.step {
+  display: flex; gap: 24px; padding: 24px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: flex-start;
+}
+.step:last-child { border-bottom: none; }
+.step-num {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: var(--accent); color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 800; flex-shrink: 0;
+  font-family: var(--font-mono);
+}
+.step-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+.step-desc { font-size: 14px; color: var(--muted); }
+
+/* CTA section */
+.cta-section {
+  margin: 0 24px 60px; border-radius: 20px;
+  background: linear-gradient(135deg, rgba(61,111,255,0.15) 0%, rgba(155,127,245,0.1) 100%);
+  border: 1px solid rgba(61,111,255,0.2);
+  padding: 60px 40px; text-align: center;
+}
+.cta-section h2 { font-size: clamp(24px, 4vw, 38px); font-weight: 800; margin-bottom: 16px; }
+.cta-section p { color: var(--muted); margin-bottom: 32px; font-size: 16px; }
+
+/* Ad slot on landing */
+.ad-banner {
+  max-width: 728px; margin: 0 auto 40px;
+  background: var(--card); border: 1px dashed var(--border2);
+  border-radius: 12px; padding: 24px;
+  text-align: center; color: var(--muted); font-size: 12px;
+  font-family: var(--font-mono);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-badge">
+    <div class="hero-badge-dot"></div>
+    OSINT + Forensic + AI Detection
+  </div>
+  <h1>Проверьте подлинность<br>любого <span>фото за секунды</span></h1>
+  <p class="hero-sub">
+    Анализ метаданных, ELA-forensics, обратный поиск в Google и Yandex,
+    детекция AI-генерации — всё в одном инструменте.
+  </p>
+  <div class="hero-btns">
+    {% if session.user_id %}
+      <a class="btn-primary" href="/tool">🔍 Открыть инструмент</a>
+    {% else %}
+      <a class="btn-primary" href="/register">Начать бесплатно →</a>
+      <a class="btn-secondary" href="/login">Уже есть аккаунт</a>
+    {% endif %}
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-num">{{ stats.total_analyses or 0 }}</div>
+      <div class="stat-label">Фото проверено</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">{{ stats.total_users or 0 }}</div>
+      <div class="stat-label">Пользователей</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">{{ stats.total_visits or 0 }}</div>
+      <div class="stat-label">Посещений</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">6+</div>
+      <div class="stat-label">Методов анализа</div>
+    </div>
+  </div>
+</section>
+
+<!-- Ad slot (top) -->
+<div class="ad-banner">
+  [ Рекламный блок 728×90 — Google AdSense ]
+</div>
+
+<!-- Features -->
+<section class="section">
+  <div class="section-tag">Возможности</div>
+  <h2 class="section-title">Всё что нужно для<br>проверки фото</h2>
+  <p class="section-sub">Шесть независимых методов анализа дают полную картину подлинности изображения.</p>
+
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(61,111,255,0.15)">📋</div>
+      <div class="feature-title">Анализ метаданных</div>
+      <div class="feature-desc">EXIF, IPTC, XMP — модель камеры, дата съёмки, GPS-координаты, программное обеспечение.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(34,211,160,0.15)">🗺</div>
+      <div class="feature-title">GPS геолокация</div>
+      <div class="feature-desc">Определяем место съёмки с точностью до адреса. Ссылки на Google Maps и OpenStreetMap.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(245,200,66,0.15)">🎨</div>
+      <div class="feature-title">ELA Forensics</div>
+      <div class="feature-desc">Error Level Analysis выявляет области монтажа и повторного сжатия JPEG.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(255,91,110,0.15)">🤖</div>
+      <div class="feature-title">AI детекция</div>
+      <div class="feature-desc">Определяем вероятность генерации Midjourney, DALL-E, Stable Diffusion и других.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(155,127,245,0.15)">🌐</div>
+      <div class="feature-title">Обратный поиск</div>
+      <div class="feature-desc">Google Lens и Yandex Images — находим все источники фото в интернете.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(61,111,255,0.15)">🔑</div>
+      <div class="feature-title">Хэши и дубликаты</div>
+      <div class="feature-desc">pHash, dHash, MD5, SHA-256. Поиск похожих фото в базе уже проверенных.</div>
+    </div>
+  </div>
+</section>
+
+<!-- How it works -->
+<section class="section" id="how">
+  <div class="section-tag">Как работает</div>
+  <h2 class="section-title">Три шага до результата</h2>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div>
+        <div class="step-title">Зарегистрируйтесь бесплатно</div>
+        <div class="step-desc">Создайте аккаунт за 30 секунд — только email и пароль. Никаких карт и платежей.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div>
+        <div class="step-title">Загрузите фотографию</div>
+        <div class="step-desc">JPG, PNG, WEBP, HEIC — любой формат до 50 МБ. С телефона или компьютера.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div>
+        <div class="step-title">Получите подробный анализ</div>
+        <div class="step-desc">Через 15–30 секунд — полный отчёт с оценкой доверия, метаданными, ELA и результатами поиска.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <h2>Готовы проверить фото?</h2>
+  <p>Регистрация бесплатная. Начните прямо сейчас.</p>
+  {% if session.user_id %}
+    <a class="btn-primary" href="/tool">🔍 Открыть инструмент</a>
+  {% else %}
+    <a class="btn-primary" href="/register">Создать аккаунт бесплатно →</a>
+  {% endif %}
+</section>
+
+{% endblock %}

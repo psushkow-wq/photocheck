@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f1117">
+<title>Photo Authenticator</title>
+<link rel="manifest" href="/static/manifest.json">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0f1117;
+  --card: #1a1d27;
+  --border: #2d3148;
+  --text: #e2e8f0;
+  --muted: #8892a4;
+  --accent: #6c8ef7;
+  --green: #34d399;
+  --yellow: #fbbf24;
+  --red: #f87171;
+  --purple: #a78bfa;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  min-height: 100vh;
+  padding-bottom: 40px;
+}
+
+.header {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-icon { font-size: 24px; }
+.header h1 { font-size: 18px; font-weight: 700; }
+.header p { font-size: 12px; color: var(--muted); }
+
+.container { max-width: 680px; margin: 0 auto; padding: 20px 16px; }
+
+/* Upload zone */
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: 16px;
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  background: var(--card);
+}
+.upload-zone:hover, .upload-zone.drag-over {
+  border-color: var(--accent);
+  background: #1e2235;
+}
+.upload-zone input[type=file] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+.upload-icon { font-size: 48px; margin-bottom: 12px; }
+.upload-zone h2 { font-size: 18px; margin-bottom: 8px; }
+.upload-zone p { color: var(--muted); font-size: 14px; }
+
+/* Preview */
+.preview-wrap {
+  display: none;
+  margin-top: 16px;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+}
+.preview-wrap img {
+  width: 100%; max-height: 300px; object-fit: cover; display: block;
+}
+.preview-remove {
+  position: absolute; top: 10px; right: 10px;
+  background: rgba(0,0,0,0.7); border: none; color: white;
+  border-radius: 50%; width: 32px; height: 32px;
+  font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+
+/* Settings */
+.settings {
+  display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap;
+}
+.setting-chip {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 20px; padding: 8px 14px; font-size: 13px;
+  cursor: pointer; transition: all 0.2s; user-select: none;
+}
+.setting-chip.active { border-color: var(--accent); color: var(--accent); }
+.setting-chip input { display: none; }
+
+/* Analyze button */
+.btn-analyze {
+  width: 100%; margin-top: 16px; padding: 16px;
+  background: var(--accent); color: white; border: none;
+  border-radius: 12px; font-size: 16px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s; display: flex;
+  align-items: center; justify-content: center; gap: 8px;
+}
+.btn-analyze:hover { background: #4f72e0; }
+.btn-analyze:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Progress */
+.progress-wrap {
+  display: none; margin-top: 20px;
+  background: var(--card); border-radius: 12px; padding: 20px;
+}
+.progress-label { font-size: 14px; color: var(--muted); margin-bottom: 10px; }
+.progress-bar-bg {
+  background: var(--border); border-radius: 4px; height: 6px; overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%; background: var(--accent); border-radius: 4px;
+  transition: width 0.3s; width: 0%;
+}
+
+/* Results */
+.results { display: none; margin-top: 20px; }
+
+/* Trust badge */
+.trust-badge {
+  border-radius: 12px; padding: 20px;
+  display: flex; align-items: center; gap: 14px; margin-bottom: 16px;
+}
+.trust-badge.high { background: rgba(52,211,153,0.12); border: 1px solid rgba(52,211,153,0.3); }
+.trust-badge.medium { background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.3); }
+.trust-badge.low { background: rgba(248,113,113,0.12); border: 1px solid rgba(248,113,113,0.3); }
+.trust-badge.unknown { background: var(--card); border: 1px solid var(--border); }
+.trust-icon { font-size: 36px; }
+.trust-label { font-size: 17px; font-weight: 700; }
+
+/* Cards */
+.card {
+  background: var(--card); border-radius: 12px;
+  padding: 16px; margin-bottom: 12px;
+}
+.card-title {
+  font-size: 13px; font-weight: 600; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
+}
+
+/* Score bars */
+.score-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.score-label { font-size: 13px; color: var(--muted); min-width: 160px; flex-shrink: 0; }
+.score-bar-bg { flex: 1; background: var(--border); border-radius: 3px; height: 6px; }
+.score-bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
+.score-val { font-size: 13px; font-weight: 600; min-width: 36px; text-align: right; }
+
+/* Table rows */
+.meta-row {
+  display: flex; padding: 8px 0;
+  border-bottom: 1px solid var(--border); align-items: flex-start; gap: 12px;
+}
+.meta-row:last-child { border-bottom: none; }
+.meta-key { font-size: 13px; color: var(--muted); min-width: 130px; flex-shrink: 0; }
+.meta-val { font-size: 13px; word-break: break-all; }
+
+/* Flags */
+.flag { display: flex; gap: 8px; padding: 6px 0; font-size: 13px; }
+.flag.red { color: var(--red); }
+.flag.green { color: var(--green); }
+.flag.yellow { color: var(--yellow); }
+
+/* Match cards */
+.match-card {
+  background: rgba(45,49,72,0.5); border-radius: 8px;
+  padding: 12px; margin-bottom: 8px;
+}
+.match-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.match-service { font-size: 13px; font-weight: 600; color: var(--accent); }
+.match-status { font-size: 12px; }
+.match-url { font-size: 12px; color: var(--muted); word-break: break-all; }
+.match-link { color: var(--accent); text-decoration: none; }
+.match-link:hover { text-decoration: underline; }
+
+/* GPS map */
+.gps-card { text-align: center; }
+.gps-coords { font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+.gps-address { font-size: 14px; margin-bottom: 12px; }
+.gps-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.btn-map {
+  padding: 8px 16px; border-radius: 8px; font-size: 13px;
+  border: 1px solid var(--border); background: var(--bg);
+  color: var(--text); text-decoration: none; display: inline-block;
+  transition: all 0.2s;
+}
+.btn-map:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ELA image */
+.ela-img { width: 100%; border-radius: 8px; margin-top: 10px; }
+
+/* Tabs */
+.tabs { display: flex; gap: 2px; background: var(--card); border-radius: 10px; padding: 4px; margin-bottom: 16px; overflow-x: auto; }
+.tab {
+  flex: 1; min-width: 70px; padding: 8px 6px; text-align: center;
+  font-size: 12px; color: var(--muted); border-radius: 7px;
+  cursor: pointer; transition: all 0.2s; white-space: nowrap; border: none; background: none;
+}
+.tab.active { background: var(--border); color: var(--text); font-weight: 600; }
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* Warning */
+.warning-box {
+  background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.3);
+  border-radius: 8px; padding: 10px 12px; font-size: 13px; color: var(--yellow);
+  margin-bottom: 12px;
+}
+
+/* Disclaimer */
+.disclaimer {
+  background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.2);
+  border-radius: 10px; padding: 12px; font-size: 12px; color: var(--yellow);
+  margin-top: 16px; line-height: 1.5;
+}
+
+@media (max-width: 400px) {
+  .score-label { min-width: 110px; font-size: 12px; }
+  .meta-key { min-width: 100px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">🔍</div>
+  <div>
+    <h1>Photo Authenticator</h1>
+    <p>OSINT / Forensic анализ фотографий</p>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Upload -->
+  <div class="upload-zone" id="uploadZone">
+    <input type="file" id="fileInput" accept="image/*" capture="environment">
+    <div class="upload-icon">📷</div>
+    <h2>Загрузить фото</h2>
+    <p>Нажмите или перетащите файл<br>JPG, PNG, WEBP, HEIC до 50 МБ</p>
+  </div>
+
+  <div class="preview-wrap" id="previewWrap">
+    <img id="previewImg" src="" alt="Preview">
+    <button class="preview-remove" id="removeBtn">✕</button>
+  </div>
+
+  <!-- Settings -->
+  <div class="settings">
+    <label class="setting-chip active" id="chipExternal">
+      <input type="checkbox" id="allowExternal" checked>
+      🌐 Внешние API
+    </label>
+    <label class="setting-chip" id="chipFull">
+      <input type="checkbox" id="fullMode">
+      🔬 Полный режим
+    </label>
+  </div>
+
+  <button class="btn-analyze" id="analyzeBtn" disabled>
+    🔍 Анализировать
+  </button>
+
+  <!-- Progress -->
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-label" id="progressLabel">Анализируем...</div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="results" id="results">
+
+    <!-- Trust badge -->
+    <div class="trust-badge" id="trustBadge">
+      <div class="trust-icon" id="trustIcon">⚪</div>
+      <div>
+        <div class="trust-label" id="trustLabel">—</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:2px" id="trustSub"></div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('summary')">Итог</button>
+      <button class="tab" onclick="switchTab('metadata')">Метаданные</button>
+      <button class="tab" onclick="switchTab('forensics')">Forensics</button>
+      <button class="tab" onclick="switchTab('internet')">Интернет</button>
+      <button class="tab" onclick="switchTab('ai')">AI</button>
+    </div>
+
+    <!-- Summary tab -->
+    <div class="tab-content active" id="tab-summary">
+      <div class="card">
+        <div class="card-title">📊 Оценки</div>
+        <div id="scoresBars"></div>
+      </div>
+      <div class="card" id="redFlagsCard" style="display:none">
+        <div class="card-title">⚠️ Подозрительные признаки</div>
+        <div id="redFlagsList"></div>
+      </div>
+      <div class="card" id="authArgsCard" style="display:none">
+        <div class="card-title">✅ Аргументы подлинности</div>
+        <div id="authArgsList"></div>
+      </div>
+      <div class="disclaimer">
+        ⚠️ Это предварительный OSINT/forensic-анализ, не судебная экспертиза. Результаты носят вероятностный характер.
+      </div>
+    </div>
+
+    <!-- Metadata tab -->
+    <div class="tab-content" id="tab-metadata">
+      <div class="card" id="metaCard">
+        <div class="card-title">📋 EXIF данные</div>
+        <div id="metaTable"></div>
+      </div>
+      <div class="card" id="gpsCard" style="display:none">
+        <div class="card-title">📍 GPS местоположение</div>
+        <div class="gps-card">
+          <div class="gps-coords" id="gpsCoords"></div>
+          <div class="gps-address" id="gpsAddress"></div>
+          <div class="gps-btns" id="gpsBtns"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Forensics tab -->
+    <div class="tab-content" id="tab-forensics">
+      <div class="card">
+        <div class="card-title">🔬 Технические параметры</div>
+        <div id="forensicsTable"></div>
+      </div>
+      <div class="card" id="manipCard" style="display:none">
+        <div class="card-title">⚠️ Признаки редактирования</div>
+        <div id="manipList"></div>
+      </div>
+      <div class="card" id="elaCard" style="display:none">
+        <div class="card-title">🎨 ELA (Error Level Analysis)</div>
+        <div id="elaInfo"></div>
+        <img class="ela-img" id="elaImg" src="" alt="ELA" style="display:none">
+      </div>
+      <div class="card">
+        <div class="card-title">🔑 Хэши</div>
+        <div id="hashesTable"></div>
+      </div>
+    </div>
+
+    <!-- Internet tab -->
+    <div class="tab-content" id="tab-internet">
+      <div class="card" id="earliestCard" style="display:none">
+        <div class="card-title">📅 Ранний источник</div>
+        <div id="earliestInfo"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🔎 Обратный поиск</div>
+        <div id="matchesList"></div>
+      </div>
+    </div>
+
+    <!-- AI tab -->
+    <div class="tab-content" id="tab-ai">
+      <div class="card">
+        <div class="card-title">🤖 AI детекция</div>
+        <div id="aiOverall"></div>
+      </div>
+      <div class="card" id="aiServicesCard" style="display:none">
+        <div class="card-title">📡 Результаты сервисов</div>
+        <div id="aiServicesList"></div>
+      </div>
+      <div class="card" id="aiHeuristicsCard" style="display:none">
+        <div class="card-title">🔍 Локальные эвристики</div>
+        <div id="aiHeuristicsList"></div>
+      </div>
+    </div>
+
+  </div><!-- /results -->
+</div><!-- /container -->
+
+<script>
+let selectedFile = null;
+
+// ── File handling ────────────────────────────────────────────────────────────
+const fileInput = document.getElementById('fileInput');
+const uploadZone = document.getElementById('uploadZone');
+const previewWrap = document.getElementById('previewWrap');
+const previewImg = document.getElementById('previewImg');
+const analyzeBtn = document.getElementById('analyzeBtn');
+
+fileInput.addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (f) selectFile(f);
+});
+
+document.getElementById('removeBtn').addEventListener('click', () => {
+  selectedFile = null;
+  previewWrap.style.display = 'none';
+  uploadZone.style.display = 'block';
+  analyzeBtn.disabled = true;
+  fileInput.value = '';
+  document.getElementById('results').style.display = 'none';
+});
+
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f) selectFile(f);
+});
+
+function selectFile(f) {
+  selectedFile = f;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    previewImg.src = ev.target.result;
+    previewWrap.style.display = 'block';
+    uploadZone.style.display = 'none';
+    analyzeBtn.disabled = false;
+  };
+  reader.readAsDataURL(f);
+}
+
+// ── Settings chips ────────────────────────────────────────────────────────────
+document.getElementById('chipExternal').addEventListener('click', function() {
+  this.classList.toggle('active');
+});
+document.getElementById('chipFull').addEventListener('click', function() {
+  this.classList.toggle('active');
+});
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+// ── Analyze ────────────────────────────────────────────────────────────────
+analyzeBtn.addEventListener('click', async () => {
+  if (!selectedFile) return;
+
+  const allowExternal = document.getElementById('chipExternal').classList.contains('active');
+  const fullMode = document.getElementById('chipFull').classList.contains('active');
+
+  // Show progress
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('progressWrap').style.display = 'block';
+  analyzeBtn.disabled = true;
+  setProgress('Загружаем фото...', 5);
+
+  const form = new FormData();
+  form.append('image', selectedFile);
+  form.append('mode', fullMode ? 'full' : 'fast');
+  form.append('allow_external', allowExternal ? 'true' : 'false');
+
+  // Fake progress animation
+  let fakeP = 5;
+  const fakeTimer = setInterval(() => {
+    fakeP = Math.min(fakeP + 3, 85);
+    const labels = ['Читаем метаданные...', 'Вычисляем хэши...', 'Forensic анализ...', 'AI детекция...', 'Обратный поиск...'];
+    const lbl = labels[Math.floor((fakeP - 5) / 16)] || 'Обрабатываем...';
+    setProgress(lbl, fakeP);
+  }, 800);
+
+  try {
+    const resp = await fetch('/analyze', { method: 'POST', body: form });
+    clearInterval(fakeTimer);
+    setProgress('Готово!', 100);
+
+    if (!resp.ok) {
+      const err = await resp.json();
+      alert('Ошибка: ' + (err.error || resp.statusText));
+      return;
+    }
+
+    const data = await resp.json();
+    setTimeout(() => {
+      document.getElementById('progressWrap').style.display = 'none';
+      renderResults(data);
+    }, 400);
+
+  } catch (err) {
+    clearInterval(fakeTimer);
+    alert('Ошибка соединения: ' + err.message);
+  } finally {
+    analyzeBtn.disabled = false;
+  }
+});
+
+function setProgress(label, pct) {
+  document.getElementById('progressLabel').textContent = label;
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+// ── Render results ─────────────────────────────────────────────────────────
+function renderResults(data) {
+  document.getElementById('results').style.display = 'block';
+  // Switch to summary tab
+  switchTabDirect('summary');
+
+  renderRisk(data.risk);
+  renderMetadata(data.metadata);
+  renderForensics(data.forensics, data.hashes);
+  renderInternet(data.reverse_search);
+  renderAI(data.ai_detection);
+}
+
+function switchTabDirect(name) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelectorAll('.tab')[['summary','metadata','forensics','internet','ai'].indexOf(name)].classList.add('active');
+}
+
+// ── Risk ───────────────────────────────────────────────────────────────────
+function renderRisk(risk) {
+  if (!risk) return;
+  const badge = document.getElementById('trustBadge');
+  badge.className = 'trust-badge ' + risk.level;
+  const icons = { high: '🟢', medium: '🟡', low: '🔴', unknown: '⚪' };
+  document.getElementById('trustIcon').textContent = icons[risk.level] || '⚪';
+  document.getElementById('trustLabel').textContent = risk.label;
+
+  // Bars
+  const bars = [
+    { label: 'Интернет-провенанс', val: risk.internet_provenance, color: '#6c8ef7' },
+    { label: 'Метаданные', val: risk.metadata_confidence, color: '#34d399' },
+    { label: 'AI-подозрение', val: risk.ai_suspicion, color: '#f87171' },
+    { label: 'Признаки монтажа', val: risk.manipulation_suspicion, color: '#fbbf24' },
+    { label: 'Геолокация', val: risk.geolocation_confidence, color: '#a78bfa' },
+  ];
+  document.getElementById('scoresBars').innerHTML = bars.map(b => `
+    <div class="score-row">
+      <div class="score-label">${b.label}</div>
+      <div class="score-bar-bg"><div class="score-bar-fill" style="width:${b.val}%;background:${b.color}"></div></div>
+      <div class="score-val" style="color:${b.color}">${b.val}%</div>
+    </div>
+  `).join('');
+
+  // Red flags
+  if (risk.red_flags && risk.red_flags.length) {
+    document.getElementById('redFlagsCard').style.display = 'block';
+    document.getElementById('redFlagsList').innerHTML =
+      risk.red_flags.map(f => `<div class="flag red">⚠️ ${esc(f)}</div>`).join('');
+  }
+
+  // Auth args
+  if (risk.authenticity_arguments && risk.authenticity_arguments.length) {
+    document.getElementById('authArgsCard').style.display = 'block';
+    document.getElementById('authArgsList').innerHTML =
+      risk.authenticity_arguments.map(f => `<div class="flag green">✓ ${esc(f)}</div>`).join('');
+  }
+}
+
+// ── Metadata ───────────────────────────────────────────────────────────────
+function renderMetadata(m) {
+  if (!m) {
+    document.getElementById('metaTable').innerHTML = '<div style="color:var(--muted);font-size:13px">Метаданные не извлечены</div>';
+    return;
+  }
+
+  const fields = [
+    ['Камера', [m.camera_make, m.camera_model].filter(Boolean).join(' ')],
+    ['Программа', m.software],
+    ['Дата съёмки', m.datetime_original],
+    ['Дата изменения', m.datetime_modified],
+    ['Объектив', m.lens_model],
+    ['Диафрагма', m.aperture],
+    ['Выдержка', m.shutter_speed],
+    ['ISO', m.iso],
+    ['Фокус', m.focal_length],
+    ['Редактор', m.editing_software],
+  ].filter(([k, v]) => v);
+
+  if (m.warnings && m.warnings.length) {
+    document.getElementById('metaCard').insertAdjacentHTML('afterbegin',
+      m.warnings.map(w => `<div class="warning-box">⚠️ ${esc(w)}</div>`).join(''));
+  }
+
+  document.getElementById('metaTable').innerHTML = fields.length
+    ? fields.map(([k, v]) => `
+      <div class="meta-row">
+        <div class="meta-key">${k}</div>
+        <div class="meta-val" style="${k==='Редактор'?'color:var(--red)':''}">${esc(String(v))}</div>
+      </div>`).join('')
+    : '<div style="color:var(--muted);font-size:13px">Метаданные отсутствуют или удалены</div>';
+
+  // GPS
+  if (m.gps) {
+    document.getElementById('gpsCard').style.display = 'block';
+    const g = m.gps;
+    document.getElementById('gpsCoords').textContent =
+      `${g.latitude.toFixed(6)}, ${g.longitude.toFixed(6)}` +
+      (g.altitude ? ` · ${g.altitude.toFixed(0)} м` : '');
+    document.getElementById('gpsAddress').textContent = g.address || '';
+    document.getElementById('gpsBtns').innerHTML = `
+      <a href="${g.osm_url}" target="_blank" class="btn-map">🗺 OpenStreetMap</a>
+      <a href="${g.gmaps_url}" target="_blank" class="btn-map">📍 Google Maps</a>
+    `;
+  }
+}
+
+// ── Forensics ──────────────────────────────────────────────────────────────
+function renderForensics(f, h) {
+  if (!f) {
+    document.getElementById('forensicsTable').innerHTML = '<div style="color:var(--muted);font-size:13px">Не выполнялся</div>';
+  } else {
+    const rows = [
+      ['Формат', f.format],
+      ['Размер', `${f.width} × ${f.height} пкс`],
+      ['Цвет', f.color_mode],
+      ['Файл', `${f.file_size_kb} КБ`],
+      ['JPEG качество', f.jpeg_quality ? f.jpeg_quality + '%' : null],
+    ].filter(([k,v]) => v);
+    document.getElementById('forensicsTable').innerHTML =
+      rows.map(([k,v]) => `<div class="meta-row"><div class="meta-key">${k}</div><div class="meta-val">${esc(String(v))}</div></div>`).join('');
+
+    if (f.manipulation_flags && f.manipulation_flags.length) {
+      document.getElementById('manipCard').style.display = 'block';
+      document.getElementById('manipList').innerHTML =
+        f.manipulation_flags.map(fl => `<div class="flag red">⚠️ ${esc(fl)}</div>`).join('');
+    }
+
+    if (f.ela) {
+      document.getElementById('elaCard').style.display = 'block';
+      document.getElementById('elaInfo').innerHTML = `
+        <div class="meta-row"><div class="meta-key">Подозр. пикселей</div><div class="meta-val">${f.ela.suspicious_percent}%</div></div>
+        <div class="meta-row"><div class="meta-key">Макс. разница</div><div class="meta-val">${f.ela.max_diff}</div></div>
+        ${f.ela.notes.map(n => `<div class="flag yellow">⚠️ ${esc(n)}</div>`).join('')}
+      `;
+      if (f.ela.image_path) {
+        const elaImg = document.getElementById('elaImg');
+        elaImg.src = '/ela_image?path=' + encodeURIComponent(f.ela.image_path);
+        elaImg.style.display = 'block';
+      }
+    }
+  }
+
+  // Hashes
+  if (h) {
+    const hrows = [
+      ['pHash', h.phash],
+      ['MD5', h.md5],
+      ['SHA-256', h.sha256 ? h.sha256.substring(0,32)+'…' : null],
+    ].filter(([k,v]) => v);
+    let html = hrows.map(([k,v]) => `
+      <div class="meta-row">
+        <div class="meta-key">${k}</div>
+        <div class="meta-val" style="font-family:monospace;font-size:11px">${esc(v)}</div>
+      </div>`).join('');
+    if (h.duplicate_found) {
+      html += `<div class="flag yellow">⚠️ Найден локальный дубликат (${h.duplicate_similarity}% сходства)</div>`;
+    }
+    document.getElementById('hashesTable').innerHTML = html;
+  }
+}
+
+// ── Internet ───────────────────────────────────────────────────────────────
+function renderInternet(rs) {
+  if (!rs) {
+    document.getElementById('matchesList').innerHTML =
+      '<div style="color:var(--muted);font-size:13px">Обратный поиск не выполнялся</div>';
+    return;
+  }
+
+  if (rs.earliest_url) {
+    document.getElementById('earliestCard').style.display = 'block';
+    document.getElementById('earliestInfo').innerHTML = `
+      <a href="${rs.earliest_url}" target="_blank" class="match-link" style="font-size:13px">${esc(rs.earliest_url.substring(0,80))}…</a>
+      ${rs.earliest_date ? `<div style="font-size:12px;color:var(--muted);margin-top:4px">${esc(rs.earliest_date)}</div>` : ''}
+    `;
+  }
+
+  if (!rs.matches || !rs.matches.length) {
+    document.getElementById('matchesList').innerHTML =
+      '<div style="color:var(--muted);font-size:13px">Совпадений не найдено</div>';
+    return;
+  }
+
+  document.getElementById('matchesList').innerHTML = rs.matches.map(m => {
+    const statusColor = m.error ? 'var(--red)' : m.found ? 'var(--green)' : 'var(--muted)';
+    const statusText = m.error ? `⚠️ ${esc(m.error)}` : m.found ? '✓ Найдено' : 'Не найдено';
+    return `
+      <div class="match-card">
+        <div class="match-header">
+          <div class="match-service">${esc(m.service)}</div>
+          <div class="match-status" style="color:${statusColor}">${statusText}</div>
+        </div>
+        ${m.url ? `<div class="match-url"><a href="${m.url}" target="_blank" class="match-link">${esc(m.url.substring(0,80))}${m.url.length>80?'…':''}</a></div>` : ''}
+        ${m.title ? `<div style="font-size:12px;color:var(--muted);margin-top:4px">${esc(m.title)}</div>` : ''}
+        ${m.similarity ? `<div style="font-size:12px;color:var(--muted)">Сходство: ${m.similarity}%</div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+// ── AI ─────────────────────────────────────────────────────────────────────
+function renderAI(ai) {
+  if (!ai) {
+    document.getElementById('aiOverall').innerHTML =
+      '<div style="color:var(--muted);font-size:13px">AI-анализ не выполнялся</div>';
+    return;
+  }
+
+  const color = ai.score > 60 ? 'var(--red)' : ai.score > 30 ? 'var(--yellow)' : 'var(--green)';
+  document.getElementById('aiOverall').innerHTML = `
+    <div style="font-size:15px;font-weight:600;margin-bottom:8px">${esc(ai.overall)}</div>
+    <div class="score-row">
+      <div class="score-label">AI-вероятность</div>
+      <div class="score-bar-bg"><div class="score-bar-fill" style="width:${ai.score}%;background:${color}"></div></div>
+      <div class="score-val" style="color:${color}">${ai.score}%</div>
+    </div>
+  `;
+
+  if (ai.services && ai.services.length) {
+    document.getElementById('aiServicesCard').style.display = 'block';
+    document.getElementById('aiServicesList').innerHTML = ai.services.map(s => `
+      <div class="match-card">
+        <div class="match-service">${esc(s.service)}</div>
+        ${s.error ? `<div style="color:var(--red);font-size:12px;margin-top:4px">⚠️ ${esc(s.error)}</div>` : ''}
+        ${s.verdict ? `<div style="font-size:13px;margin-top:4px">${esc(s.verdict)}</div>` : ''}
+        ${s.probability !== null && s.probability !== undefined ? `<div style="font-size:12px;color:var(--muted);margin-top:4px">Вероятность AI: ${s.probability}%</div>` : ''}
+      </div>`).join('');
+  }
+
+  if (ai.heuristics && ai.heuristics.length) {
+    document.getElementById('aiHeuristicsCard').style.display = 'block';
+    document.getElementById('aiHeuristicsList').innerHTML =
+      ai.heuristics.map(h => `<div class="flag yellow">• ${esc(h)}</div>`).join('');
+  }
+}
+
+// ── Utils ──────────────────────────────────────────────────────────────────
+function esc(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>

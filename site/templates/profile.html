@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Профиль — PhotoAuth{% endblock %}
+{% block head %}
+<style>
+.profile-wrap { max-width: 680px; margin: 0 auto; padding: 32px 16px; }
+.profile-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 28px; margin-bottom: 20px;
+  display: flex; align-items: center; gap: 20px;
+}
+.avatar {
+  width: 64px; height: 64px; border-radius: 16px;
+  background: var(--accent); display: flex; align-items: center;
+  justify-content: center; font-size: 26px; font-weight: 800;
+  flex-shrink: 0; color: white;
+}
+.profile-name { font-size: 20px; font-weight: 800; }
+.profile-email { color: var(--muted); font-size: 14px; margin-top: 2px; }
+.profile-since { color: var(--muted); font-size: 12px; font-family: var(--font-mono); margin-top: 6px; }
+
+.stats-row { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+.stat-box {
+  flex: 1; min-width: 120px; background: var(--card);
+  border: 1px solid var(--border); border-radius: 12px; padding: 16px;
+  text-align: center;
+}
+.stat-box-num { font-size: 26px; font-weight: 800; font-family: var(--font-mono); color: var(--accent); }
+.stat-box-lbl { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+.section-title { font-size: 15px; font-weight: 700; margin-bottom: 12px; color: var(--muted); }
+.hist-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+}
+.hist-item:last-child { border-bottom: none; }
+.badge { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+.badge.high { background: rgba(34,211,160,0.15); color: var(--green); }
+.badge.medium { background: rgba(245,200,66,0.15); color: var(--yellow); }
+.badge.low { background: rgba(255,91,110,0.15); color: var(--red); }
+.badge.unknown { background: var(--border); color: var(--muted); }
+</style>
+{% endblock %}
+{% block content %}
+<div class="profile-wrap">
+  <div class="profile-card">
+    <div class="avatar">{{ user.name[0].upper() }}</div>
+    <div>
+      <div class="profile-name">{{ user.name }}</div>
+      <div class="profile-email">{{ user.email }}</div>
+      <div class="profile-since">С {{ user.created_at[:10] }}</div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="stat-box-num">{{ user.analyses_count }}</div>
+      <div class="stat-box-lbl">Проверок</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-box-num">{{ user.last_login[:10] if user.last_login else '—' }}</div>
+      <div class="stat-box-lbl">Последний вход</div>
+    </div>
+  </div>
+
+  {% if analyses %}
+  <div class="section-title">История проверок</div>
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:4px 16px">
+    {% for a in analyses %}
+    <div class="hist-item">
+      <span>{{ a.filename or 'без имени' }}</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="badge {{ a.trust_level or 'unknown' }}">
+          {{ {'high':'Высокий','medium':'Средний','low':'Низкий'}.get(a.trust_level,'—') }}
+        </span>
+        <span style="color:var(--muted);font-size:11px;font-family:var(--font-mono)">{{ a.created_at[:10] }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="color:var(--muted);font-size:14px;text-align:center;padding:40px">
+    Вы ещё не проверяли фото. <a href="/tool" style="color:var(--accent);text-decoration:none">Попробовать →</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

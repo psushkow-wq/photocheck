@@ -1,0 +1,531 @@
+{% extends "base.html" %}
+{% block title %}Инструмент — PhotoAuth{% endblock %}
+{% block head %}
+<style>
+.tool-wrap { max-width: 780px; margin: 0 auto; padding: 32px 16px; }
+
+.tool-header { margin-bottom: 24px; }
+.tool-header h1 { font-size: 24px; font-weight: 800; margin-bottom: 4px; }
+.tool-header p { color: var(--muted); font-size: 14px; }
+
+/* Upload */
+.upload-zone {
+  border: 2px dashed var(--border2); border-radius: 16px; padding: 48px 24px;
+  text-align: center; cursor: pointer; transition: all 0.2s;
+  position: relative; background: var(--card);
+}
+.upload-zone:hover, .upload-zone.drag-over {
+  border-color: var(--accent); background: rgba(61,111,255,0.05);
+}
+.upload-zone input[type=file] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+.upload-icon { font-size: 44px; margin-bottom: 14px; }
+.upload-zone h2 { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+.upload-zone p { color: var(--muted); font-size: 13px; }
+
+.preview-wrap {
+  display: none; margin-top: 16px; border-radius: 12px;
+  overflow: hidden; position: relative;
+}
+.preview-wrap img { width: 100%; max-height: 280px; object-fit: cover; display: block; }
+.preview-remove {
+  position: absolute; top: 10px; right: 10px;
+  background: rgba(0,0,0,0.7); border: none; color: white;
+  border-radius: 50%; width: 30px; height: 30px; font-size: 14px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+
+.settings { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.chip {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 20px; padding: 7px 14px; font-size: 13px;
+  cursor: pointer; transition: all 0.2s; user-select: none;
+}
+.chip.active { border-color: var(--accent); color: var(--accent); background: rgba(61,111,255,0.08); }
+
+.btn-analyze {
+  width: 100%; margin-top: 14px; padding: 15px;
+  background: var(--accent); color: white; border: none;
+  border-radius: 12px; font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s; font-family: var(--font-display);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn-analyze:hover { background: var(--accent2); }
+.btn-analyze:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Progress */
+.progress-card {
+  display: none; margin-top: 16px; background: var(--card);
+  border: 1px solid var(--border); border-radius: 14px; padding: 20px;
+}
+.progress-label { font-size: 14px; color: var(--muted); margin-bottom: 10px; }
+.progress-bg { background: var(--border); border-radius: 4px; height: 4px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.4s; width: 0%; }
+
+/* Results */
+.results { display: none; margin-top: 24px; }
+
+.trust-card {
+  border-radius: 14px; padding: 20px 24px;
+  display: flex; align-items: center; gap: 16px; margin-bottom: 16px;
+}
+.trust-card.high { background: rgba(34,211,160,0.1); border: 1px solid rgba(34,211,160,0.25); }
+.trust-card.medium { background: rgba(245,200,66,0.1); border: 1px solid rgba(245,200,66,0.25); }
+.trust-card.low { background: rgba(255,91,110,0.1); border: 1px solid rgba(255,91,110,0.25); }
+.trust-card.unknown { background: var(--card); border: 1px solid var(--border); }
+.trust-emoji { font-size: 36px; }
+.trust-label { font-size: 18px; font-weight: 800; }
+
+/* Tabs */
+.tabs {
+  display: flex; gap: 2px; background: var(--card);
+  border-radius: 10px; padding: 4px; margin-bottom: 16px; overflow-x: auto;
+}
+.tab {
+  flex: 1; min-width: 65px; padding: 8px 4px; text-align: center;
+  font-size: 12px; color: var(--muted); border-radius: 7px;
+  cursor: pointer; white-space: nowrap; border: none; background: none;
+  font-family: var(--font-display); font-weight: 600; transition: all 0.2s;
+}
+.tab.active { background: var(--border2); color: var(--text); }
+
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+/* Cards */
+.rcard {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px; margin-bottom: 12px;
+}
+.rcard-title {
+  font-size: 11px; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;
+}
+.score-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.score-lbl { font-size: 13px; color: var(--muted); min-width: 150px; }
+.score-bg { flex: 1; background: var(--border); border-radius: 3px; height: 5px; }
+.score-fill { height: 100%; border-radius: 3px; transition: width 0.6s; }
+.score-v { font-size: 12px; font-family: var(--font-mono); min-width: 34px; text-align: right; }
+
+.mrow {
+  display: flex; padding: 7px 0; border-bottom: 1px solid var(--border);
+  font-size: 13px; gap: 12px;
+}
+.mrow:last-child { border-bottom: none; }
+.mkey { color: var(--muted); min-width: 120px; flex-shrink: 0; }
+
+.flag { font-size: 13px; padding: 5px 0; }
+.flag.red { color: var(--red); }
+.flag.green { color: var(--green); }
+.flag.yellow { color: var(--yellow); }
+
+.match-item {
+  background: var(--bg2); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px;
+}
+.match-svc { font-size: 12px; font-weight: 700; color: var(--accent); }
+.match-status { font-size: 12px; }
+.match-url { font-size: 11px; color: var(--muted); word-break: break-all; margin-top: 4px; }
+.match-url a { color: var(--accent2); text-decoration: none; }
+
+.ela-img { width: 100%; border-radius: 8px; margin-top: 10px; }
+
+.gps-wrap { text-align: center; }
+.gps-coord { font-size: 12px; font-family: var(--font-mono); color: var(--muted); }
+.gps-addr { font-size: 14px; margin: 6px 0 12px; }
+.gps-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.gps-btn {
+  padding: 7px 14px; border-radius: 8px; font-size: 12px;
+  border: 1px solid var(--border2); background: var(--bg);
+  color: var(--text); text-decoration: none; transition: all 0.2s;
+}
+.gps-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Recent */
+.recent { margin-top: 32px; }
+.recent-title { font-size: 14px; font-weight: 700; color: var(--muted); margin-bottom: 12px; }
+.recent-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+}
+.recent-item:last-child { border-bottom: none; }
+.recent-name { color: var(--text); }
+.recent-meta { color: var(--muted); font-size: 12px; font-family: var(--font-mono); }
+.badge {
+  padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;
+}
+.badge.high { background: rgba(34,211,160,0.15); color: var(--green); }
+.badge.medium { background: rgba(245,200,66,0.15); color: var(--yellow); }
+.badge.low { background: rgba(255,91,110,0.15); color: var(--red); }
+.badge.unknown { background: var(--border); color: var(--muted); }
+
+/* Ad slot */
+.ad-slot {
+  background: var(--card); border: 1px dashed var(--border2);
+  border-radius: 10px; padding: 16px; text-align: center;
+  color: var(--muted); font-size: 11px; font-family: var(--font-mono);
+  margin: 16px 0;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tool-wrap">
+
+  <div class="tool-header">
+    <h1>🔍 Проверка фото</h1>
+    <p>Привет, {{ user.name }}! Загрузите фотографию для анализа.</p>
+  </div>
+
+  <!-- Ad top -->
+  <div class="ad-slot">[ Реклама 728×90 — Google AdSense ]</div>
+
+  <!-- Upload zone -->
+  <div class="upload-zone" id="uploadZone">
+    <input type="file" id="fileInput" accept="image/*" capture="environment">
+    <div class="upload-icon">📷</div>
+    <h2>Загрузить фотографию</h2>
+    <p>Нажмите или перетащите · JPG PNG WEBP HEIC до 50 МБ</p>
+  </div>
+
+  <div class="preview-wrap" id="previewWrap">
+    <img id="previewImg" src="" alt="">
+    <button class="preview-remove" id="removeBtn">✕</button>
+  </div>
+
+  <div class="settings">
+    <div class="chip active" id="chipExt">🌐 Внешние API</div>
+    <div class="chip" id="chipFull">🔬 Полный режим</div>
+  </div>
+
+  <button class="btn-analyze" id="analyzeBtn" disabled>🔍 Анализировать</button>
+
+  <div class="progress-card" id="progressCard">
+    <div class="progress-label" id="progressLabel">Анализируем...</div>
+    <div class="progress-bg"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+
+  <!-- Results -->
+  <div class="results" id="results">
+
+    <div class="trust-card" id="trustCard">
+      <div class="trust-emoji" id="trustEmoji">⚪</div>
+      <div><div class="trust-label" id="trustLabel">—</div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('summary',this)">Итог</button>
+      <button class="tab" onclick="showTab('meta',this)">Данные</button>
+      <button class="tab" onclick="showTab('forensics',this)">Forensics</button>
+      <button class="tab" onclick="showTab('internet',this)">Интернет</button>
+      <button class="tab" onclick="showTab('ai',this)">AI</button>
+    </div>
+
+    <div class="tab-pane active" id="tab-summary">
+      <div class="rcard">
+        <div class="rcard-title">Оценки</div>
+        <div id="scoresBars"></div>
+      </div>
+      <div class="rcard" id="redCard" style="display:none">
+        <div class="rcard-title">⚠️ Подозрительные признаки</div>
+        <div id="redList"></div>
+      </div>
+      <div class="rcard" id="authCard" style="display:none">
+        <div class="rcard-title">✅ Аргументы подлинности</div>
+        <div id="authList"></div>
+      </div>
+    </div>
+
+    <div class="tab-pane" id="tab-meta">
+      <div class="rcard">
+        <div class="rcard-title">EXIF метаданные</div>
+        <div id="metaTable"></div>
+      </div>
+      <div class="rcard" id="gpsCard" style="display:none">
+        <div class="rcard-title">📍 GPS</div>
+        <div class="gps-wrap">
+          <div class="gps-coord" id="gpsCoord"></div>
+          <div class="gps-addr" id="gpsAddr"></div>
+          <div class="gps-btns" id="gpsBtns"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane" id="tab-forensics">
+      <div class="rcard">
+        <div class="rcard-title">Параметры файла</div>
+        <div id="fTable"></div>
+      </div>
+      <div class="rcard" id="manipCard" style="display:none">
+        <div class="rcard-title">⚠️ Признаки редактирования</div>
+        <div id="manipList"></div>
+      </div>
+      <div class="rcard" id="elaCard" style="display:none">
+        <div class="rcard-title">ELA анализ</div>
+        <div id="elaInfo"></div>
+        <img class="ela-img" id="elaImg" src="" alt="ELA" style="display:none">
+      </div>
+      <div class="rcard">
+        <div class="rcard-title">Хэши</div>
+        <div id="hashTable"></div>
+      </div>
+    </div>
+
+    <div class="tab-pane" id="tab-internet">
+      <div class="rcard">
+        <div class="rcard-title">Обратный поиск</div>
+        <div id="matchList"></div>
+      </div>
+    </div>
+
+    <div class="tab-pane" id="tab-ai">
+      <div class="rcard">
+        <div class="rcard-title">AI детекция</div>
+        <div id="aiOverall"></div>
+      </div>
+      <div class="rcard" id="aiSvcCard" style="display:none">
+        <div class="rcard-title">Сервисы</div>
+        <div id="aiSvcList"></div>
+      </div>
+    </div>
+
+    <!-- Ad middle -->
+    <div class="ad-slot">[ Реклама 300×250 — Google AdSense ]</div>
+
+  </div><!-- /results -->
+
+  <!-- Recent analyses -->
+  {% if recent %}
+  <div class="recent">
+    <div class="recent-title">Последние проверки</div>
+    {% for a in recent %}
+    <div class="recent-item">
+      <span class="recent-name">{{ a.filename or 'без имени' }}</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="badge {{ a.trust_level or 'unknown' }}">
+          {{ {'high':'Высокий','medium':'Средний','low':'Низкий'}.get(a.trust_level,'—') }}
+        </span>
+        <span class="recent-meta">{{ a.created_at[:10] }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+let selFile = null;
+const fileInput = document.getElementById('fileInput');
+const uploadZone = document.getElementById('uploadZone');
+const previewWrap = document.getElementById('previewWrap');
+const analyzeBtn = document.getElementById('analyzeBtn');
+
+fileInput.addEventListener('change', e => { if(e.target.files[0]) pick(e.target.files[0]); });
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => { e.preventDefault(); uploadZone.classList.remove('drag-over'); if(e.dataTransfer.files[0]) pick(e.dataTransfer.files[0]); });
+document.getElementById('removeBtn').addEventListener('click', () => {
+  selFile = null; previewWrap.style.display='none'; uploadZone.style.display='block';
+  analyzeBtn.disabled=true; fileInput.value='';
+  document.getElementById('results').style.display='none';
+});
+
+function pick(f) {
+  selFile = f;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    document.getElementById('previewImg').src = ev.target.result;
+    previewWrap.style.display = 'block';
+    uploadZone.style.display = 'none';
+    analyzeBtn.disabled = false;
+  };
+  reader.readAsDataURL(f);
+}
+
+const chipExt = document.getElementById('chipExt');
+const chipFull = document.getElementById('chipFull');
+chipExt.addEventListener('click', () => chipExt.classList.toggle('active'));
+chipFull.addEventListener('click', () => chipFull.classList.toggle('active'));
+
+function showTab(name, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+
+analyzeBtn.addEventListener('click', async () => {
+  if (!selFile) return;
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('progressCard').style.display = 'block';
+  analyzeBtn.disabled = true;
+  prog('Загружаем...', 5);
+
+  const form = new FormData();
+  form.append('image', selFile);
+  form.append('mode', chipFull.classList.contains('active') ? 'full' : 'fast');
+  form.append('allow_external', chipExt.classList.contains('active') ? 'true' : 'false');
+
+  let p = 5;
+  const steps = ['Читаем метаданные...','Вычисляем хэши...','Forensic анализ...','AI детекция...','Поиск в интернете...'];
+  const timer = setInterval(() => {
+    p = Math.min(p+4, 88);
+    prog(steps[Math.floor((p-5)/17)] || 'Обрабатываем...', p);
+  }, 700);
+
+  try {
+    const resp = await fetch('/analyze', {method:'POST', body:form});
+    clearInterval(timer);
+    prog('Готово!', 100);
+    if (!resp.ok) { const e = await resp.json(); alert('Ошибка: '+(e.error||resp.statusText)); return; }
+    const data = await resp.json();
+    setTimeout(() => {
+      document.getElementById('progressCard').style.display = 'none';
+      render(data);
+    }, 400);
+  } catch(e) {
+    clearInterval(timer);
+    alert('Ошибка: '+e.message);
+  } finally {
+    analyzeBtn.disabled = false;
+  }
+});
+
+function prog(lbl, pct) {
+  document.getElementById('progressLabel').textContent = lbl;
+  document.getElementById('progressFill').style.width = pct+'%';
+}
+
+function render(d) {
+  document.getElementById('results').style.display = 'block';
+  showTab('summary', document.querySelectorAll('.tab')[0]);
+  renderRisk(d.risk); renderMeta(d.metadata); renderForensics(d.forensics, d.hashes);
+  renderInternet(d.reverse_search); renderAI(d.ai_detection);
+}
+
+function renderRisk(r) {
+  if (!r) return;
+  const card = document.getElementById('trustCard');
+  card.className = 'trust-card ' + r.level;
+  const icons = {high:'🟢',medium:'🟡',low:'🔴',unknown:'⚪'};
+  document.getElementById('trustEmoji').textContent = icons[r.level]||'⚪';
+  document.getElementById('trustLabel').textContent = r.label;
+  const bars = [
+    {l:'Интернет-провенанс', v:r.internet_provenance, c:'#3d6fff'},
+    {l:'Метаданные', v:r.metadata_confidence, c:'#22d3a0'},
+    {l:'AI-подозрение', v:r.ai_suspicion, c:'#ff5b6e'},
+    {l:'Признаки монтажа', v:r.manipulation_suspicion, c:'#f5c842'},
+    {l:'Геолокация', v:r.geolocation_confidence, c:'#9b7ff5'},
+  ];
+  document.getElementById('scoresBars').innerHTML = bars.map(b=>`
+    <div class="score-row">
+      <div class="score-lbl">${b.l}</div>
+      <div class="score-bg"><div class="score-fill" style="width:${b.v}%;background:${b.c}"></div></div>
+      <div class="score-v" style="color:${b.c}">${b.v}%</div>
+    </div>`).join('');
+  if (r.red_flags?.length) {
+    document.getElementById('redCard').style.display='block';
+    document.getElementById('redList').innerHTML = r.red_flags.map(f=>`<div class="flag red">⚠️ ${esc(f)}</div>`).join('');
+  }
+  if (r.authenticity_arguments?.length) {
+    document.getElementById('authCard').style.display='block';
+    document.getElementById('authList').innerHTML = r.authenticity_arguments.map(f=>`<div class="flag green">✓ ${esc(f)}</div>`).join('');
+  }
+}
+
+function renderMeta(m) {
+  if (!m) { document.getElementById('metaTable').innerHTML='<div style="color:var(--muted);font-size:13px">Нет данных</div>'; return; }
+  const rows = [
+    ['Камера',[m.camera_make,m.camera_model].filter(Boolean).join(' ')],
+    ['ПО',m.software],['Дата съёмки',m.datetime_original],
+    ['Дата изменения',m.datetime_modified],['ISO',m.iso],
+    ['Выдержка',m.shutter_speed],['Диафрагма',m.aperture],
+    ['Редактор',m.editing_software],
+  ].filter(([k,v])=>v);
+  document.getElementById('metaTable').innerHTML = rows.length
+    ? rows.map(([k,v])=>`<div class="mrow"><div class="mkey">${k}</div><div style="${k==='Редактор'?'color:var(--red)':''}">${esc(String(v))}</div></div>`).join('')
+    : '<div style="color:var(--muted);font-size:13px">Метаданные отсутствуют</div>';
+  if (m.gps) {
+    document.getElementById('gpsCard').style.display='block';
+    document.getElementById('gpsCoord').textContent=`${m.gps.latitude.toFixed(5)}, ${m.gps.longitude.toFixed(5)}`;
+    document.getElementById('gpsAddr').textContent=m.gps.address||'';
+    document.getElementById('gpsBtns').innerHTML=`
+      <a href="${m.gps.osm_url}" target="_blank" class="gps-btn">🗺 OpenStreetMap</a>
+      <a href="${m.gps.gmaps_url}" target="_blank" class="gps-btn">📍 Google Maps</a>`;
+  }
+}
+
+function renderForensics(f, h) {
+  if (f) {
+    const rows=[['Формат',f.format],['Размер',`${f.width}×${f.height}`],['Файл',`${f.file_size_kb} КБ`],['Качество JPEG',f.jpeg_quality?f.jpeg_quality+'%':null]].filter(([k,v])=>v);
+    document.getElementById('fTable').innerHTML=rows.map(([k,v])=>`<div class="mrow"><div class="mkey">${k}</div><div>${esc(String(v))}</div></div>`).join('');
+    if (f.manipulation_flags?.length) {
+      document.getElementById('manipCard').style.display='block';
+      document.getElementById('manipList').innerHTML=f.manipulation_flags.map(fl=>`<div class="flag red">⚠️ ${esc(fl)}</div>`).join('');
+    }
+    if (f.ela) {
+      document.getElementById('elaCard').style.display='block';
+      document.getElementById('elaInfo').innerHTML=`
+        <div class="mrow"><div class="mkey">Подозр. пиксели</div><div>${f.ela.suspicious_percent}%</div></div>
+        ${f.ela.notes.map(n=>`<div class="flag yellow">⚠️ ${esc(n)}</div>`).join('')}`;
+      if (f.ela.image_path) {
+        const img=document.getElementById('elaImg');
+        img.src='/ela_image?path='+encodeURIComponent(f.ela.image_path);
+        img.style.display='block';
+      }
+    }
+  }
+  if (h) {
+    document.getElementById('hashTable').innerHTML=[
+      ['pHash',h.phash],['MD5',h.md5],['SHA-256',h.sha256?h.sha256.substring(0,24)+'…':null]
+    ].filter(([k,v])=>v).map(([k,v])=>`<div class="mrow"><div class="mkey">${k}</div><div style="font-family:var(--font-mono);font-size:11px">${esc(v)}</div></div>`).join('')
+    + (h.duplicate_found?`<div class="flag yellow">⚠️ Дубликат найден (${h.duplicate_similarity}%)</div>`:'');
+  }
+}
+
+function renderInternet(rs) {
+  if (!rs) { document.getElementById('matchList').innerHTML='<div style="color:var(--muted);font-size:13px">Не выполнялся</div>'; return; }
+  if (!rs.matches?.length) { document.getElementById('matchList').innerHTML='<div style="color:var(--muted);font-size:13px">Совпадений не найдено</div>'; return; }
+  document.getElementById('matchList').innerHTML = rs.matches.map(m=>{
+    const sc = m.error?'var(--red)':m.found?'var(--green)':'var(--muted)';
+    const st = m.error?`⚠️ ${esc(m.error)}`:m.found?'✓ Найдено':'Не найдено';
+    return `<div class="match-item">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="match-svc">${esc(m.service)}</div>
+        <div class="match-status" style="color:${sc};font-size:12px">${st}</div>
+      </div>
+      ${m.url?`<div class="match-url"><a href="${m.url}" target="_blank">${esc(m.url.substring(0,70))}…</a></div>`:''}
+      ${m.title?`<div style="font-size:11px;color:var(--muted);margin-top:3px">${esc(m.title)}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function renderAI(ai) {
+  if (!ai) { document.getElementById('aiOverall').innerHTML='<div style="color:var(--muted);font-size:13px">Не выполнялся</div>'; return; }
+  const c = ai.score>60?'var(--red)':ai.score>30?'var(--yellow)':'var(--green)';
+  document.getElementById('aiOverall').innerHTML=`
+    <div style="font-size:15px;font-weight:700;margin-bottom:10px">${esc(ai.overall)}</div>
+    <div class="score-row">
+      <div class="score-lbl">Вероятность AI</div>
+      <div class="score-bg"><div class="score-fill" style="width:${ai.score}%;background:${c}"></div></div>
+      <div class="score-v" style="color:${c}">${ai.score}%</div>
+    </div>`;
+  if (ai.services?.length) {
+    document.getElementById('aiSvcCard').style.display='block';
+    document.getElementById('aiSvcList').innerHTML=ai.services.map(s=>`
+      <div class="match-item">
+        <div class="match-svc">${esc(s.service)}</div>
+        ${s.error?`<div style="color:var(--red);font-size:12px">⚠️ ${esc(s.error)}</div>`:''}
+        ${s.verdict?`<div style="font-size:13px;margin-top:3px">${esc(s.verdict)}</div>`:''}
+        ${s.probability!=null?`<div style="font-size:11px;color:var(--muted)">AI вероятность: ${s.probability}%</div>`:''}
+      </div>`).join('');
+  }
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#080b14">
+<title>{% block title %}PhotoAuth — Проверка подлинности фото{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<!-- Google AdSense placeholder -->
+<!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=YOUR_CLIENT_ID" crossorigin="anonymous"></script> -->
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #080b14;
+  --bg2:      #0d1120;
+  --card:     #111627;
+  --border:   #1e2540;
+  --border2:  #2a3357;
+  --text:     #e8edf5;
+  --muted:    #6b7a99;
+  --accent:   #3d6fff;
+  --accent2:  #5c8aff;
+  --green:    #22d3a0;
+  --yellow:   #f5c842;
+  --red:      #ff5b6e;
+  --purple:   #9b7ff5;
+  --font-display: 'Syne', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-display);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+/* Noise texture overlay */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0; opacity: 0.4;
+}
+
+/* Nav */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(8,11,20,0.92);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 60px;
+}
+
+.nav-logo {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none; color: var(--text);
+}
+.nav-logo-icon {
+  width: 32px; height: 32px; background: var(--accent);
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.nav-logo-text { font-size: 16px; font-weight: 800; letter-spacing: -0.5px; }
+
+.nav-links { display: flex; align-items: center; gap: 8px; }
+.nav-link {
+  color: var(--muted); text-decoration: none; font-size: 14px;
+  padding: 6px 12px; border-radius: 6px; transition: all 0.2s;
+}
+.nav-link:hover { color: var(--text); background: var(--card); }
+.nav-btn {
+  background: var(--accent); color: white; text-decoration: none;
+  padding: 7px 16px; border-radius: 8px; font-size: 14px; font-weight: 700;
+  transition: all 0.2s;
+}
+.nav-btn:hover { background: var(--accent2); transform: translateY(-1px); }
+.nav-btn.outline {
+  background: transparent; border: 1px solid var(--border2); color: var(--text);
+}
+.nav-btn.outline:hover { border-color: var(--accent); color: var(--accent); background: transparent; }
+
+/* Flash messages */
+.flashes { position: fixed; top: 70px; right: 20px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
+.flash {
+  padding: 12px 18px; border-radius: 10px; font-size: 14px;
+  max-width: 320px; animation: slideIn 0.3s ease;
+  display: flex; align-items: center; gap: 8px;
+}
+.flash.success { background: rgba(34,211,160,0.15); border: 1px solid rgba(34,211,160,0.3); color: var(--green); }
+.flash.error { background: rgba(255,91,110,0.15); border: 1px solid rgba(255,91,110,0.3); color: var(--red); }
+.flash.warning { background: rgba(245,200,66,0.15); border: 1px solid rgba(245,200,66,0.3); color: var(--yellow); }
+.flash.info { background: rgba(61,111,255,0.15); border: 1px solid rgba(61,111,255,0.3); color: var(--accent2); }
+@keyframes slideIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
+
+/* Main content */
+main { position: relative; z-index: 1; }
+
+/* Footer */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 24px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 60px;
+}
+footer a { color: var(--muted); text-decoration: none; }
+footer a:hover { color: var(--accent); }
+
+/* Ad placeholder */
+.ad-slot {
+  background: var(--card); border: 1px dashed var(--border2);
+  border-radius: 10px; padding: 20px; text-align: center;
+  color: var(--muted); font-size: 12px; font-family: var(--font-mono);
+  margin: 16px 0;
+}
+
+@media (max-width: 600px) {
+  .nav-links .nav-link { display: none; }
+  nav { padding: 0 16px; }
+}
+</style>
+{% block head %}{% endblock %}
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="/">
+    <div class="nav-logo-icon">🔍</div>
+    <span class="nav-logo-text">PhotoAuth</span>
+  </a>
+  <div class="nav-links">
+    {% if session.user_id %}
+      <a class="nav-link" href="/tool">Инструмент</a>
+      <a class="nav-link" href="/profile">Профиль</a>
+      <a class="nav-btn outline" href="/logout">Выйти</a>
+    {% else %}
+      <a class="nav-link" href="/#how">Как работает</a>
+      <a class="nav-btn outline" href="/login">Войти</a>
+      <a class="nav-btn" href="/register">Регистрация</a>
+    {% endif %}
+  </div>
+</nav>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flashes">
+      {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+    <script>
+      setTimeout(() => {
+        document.querySelectorAll('.flash').forEach(el => {
+          el.style.transition = 'opacity 0.5s';
+          el.style.opacity = '0';
+          setTimeout(() => el.remove(), 500);
+        });
+      }, 4000);
+    </script>
+  {% endif %}
+{% endwith %}
+
+<main>{% block content %}{% endblock %}</main>
+
+<footer>
+  <div>© 2025 PhotoAuth · <a href="/">Главная</a> · <a href="/tool">Инструмент</a></div>
+  <div style="margin-top:6px;font-size:11px">Forensic анализ фотографий на основе OSINT и AI</div>
+</footer>
+
+</body>
+</html>
