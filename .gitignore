@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.DS_Store
+.env
+*.sqlite
+*.db
+venv/
+data/
+*/data/
+*/__pycache__/
+services/.DS_Store
+ui/.DS_Store
+web/static/.DS_Store
+web/templates/.DS_Store
