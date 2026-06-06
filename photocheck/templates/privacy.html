@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}{{ t.privacy_title }} — PhotoCheck{% endblock %}
+{% block head %}
+<style>
+.wrap{max-width:680px;margin:0 auto;padding:40px 16px}
+.privacy-h{font-size:24px;font-weight:700;margin-bottom:24px}
+.sec{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:14px}
+.sec-h{font-size:15px;font-weight:700;margin-bottom:10px;color:var(--accent2)}
+.sec-t{font-size:14px;color:var(--muted);line-height:1.7}
+</style>
+{% endblock %}
+{% block content %}
+<div class="wrap">
+  <div class="privacy-h">{{ t.privacy_title }}</div>
+
+  {% if lang == 'ru' %}
+  <div class="sec"><div class="sec-h">Что мы собираем</div><div class="sec-t">PhotoCheck не требует регистрации. Мы не собираем и не храним личные данные пользователей. Для анализа статистики мы считаем количество посещений и анализов без привязки к личности.</div></div>
+  <div class="sec"><div class="sec-h">Ваши фотографии</div><div class="sec-t">Загруженные фотографии обрабатываются на сервере и немедленно удаляются после анализа. Для функции обратного поиска через Google Lens фото временно загружается на сторонний сервис freeimage.host и автоматически удаляется через 10 минут. Вы можете отключить эту функцию при анализе.</div></div>
+  <div class="sec"><div class="sec-h">Cookies</div><div class="sec-t">Мы используем cookies только для хранения выбранного языка интерфейса. Рекламные cookies могут устанавливаться Google AdSense при наличии рекламных блоков.</div></div>
+  <div class="sec"><div class="sec-h">Сторонние сервисы</div><div class="sec-t">При анализе используются: Google Lens (через SerpAPI) для обратного поиска, Sightengine для AI-детекции, OpenCage для геокодирования. Каждый из этих сервисов имеет собственную политику конфиденциальности.</div></div>
+  <div class="sec"><div class="sec-h">Контакт</div><div class="sec-t">По вопросам конфиденциальности: photocheck.ee</div></div>
+
+  {% elif lang == 'en' %}
+  <div class="sec"><div class="sec-h">What we collect</div><div class="sec-t">PhotoCheck does not require registration. We do not collect or store personal user data. For statistics, we count the number of visits and analyses without linking to any individual.</div></div>
+  <div class="sec"><div class="sec-h">Your photos</div><div class="sec-t">Uploaded photos are processed on the server and immediately deleted after analysis. For the reverse search feature via Google Lens, the photo is temporarily uploaded to the third-party service freeimage.host and automatically deleted after 10 minutes. You can disable this feature during analysis.</div></div>
+  <div class="sec"><div class="sec-h">Cookies</div><div class="sec-t">We use cookies only to store the selected interface language. Advertising cookies may be set by Google AdSense when ad blocks are present.</div></div>
+  <div class="sec"><div class="sec-h">Third-party services</div><div class="sec-t">The analysis uses: Google Lens (via SerpAPI) for reverse search, Sightengine for AI detection, OpenCage for geocoding. Each of these services has its own privacy policy.</div></div>
+  <div class="sec"><div class="sec-h">Contact</div><div class="sec-t">For privacy inquiries: photocheck.ee</div></div>
+
+  {% else %}
+  <div class="sec"><div class="sec-h">Mida me kogume</div><div class="sec-t">PhotoCheck ei nõua registreerimist. Me ei kogu ega salvesta kasutajate isikuandmeid. Statistika jaoks loeme külastuste ja analüüside arvu ilma isikuga seostamata.</div></div>
+  <div class="sec"><div class="sec-h">Teie fotod</div><div class="sec-t">Üleslaaditud fotosid töödeldakse serveris ja kustutatakse kohe pärast analüüsi. Google Lens'i pöördotsinguks laaditakse foto ajutiselt kolmanda osapoole teenusesse freeimage.host ja kustutatakse automaatselt 10 minuti pärast. Saate selle funktsiooni analüüsi ajal keelata.</div></div>
+  <div class="sec"><div class="sec-h">Küpsised</div><div class="sec-t">Kasutame küpsiseid ainult valitud liidese keele salvestamiseks. Reklaamiküpsiseid võib seada Google AdSense reklaamiplokkide olemasolul.</div></div>
+  <div class="sec"><div class="sec-h">Kolmanda osapoole teenused</div><div class="sec-t">Analüüsis kasutatakse: Google Lens (SerpAPI kaudu) pöördotsinguks, Sightengine AI tuvastamiseks, OpenCage geokodeerimiseks. Igal neist teenustest on oma privaatsuspoliitika.</div></div>
+  <div class="sec"><div class="sec-h">Kontakt</div><div class="sec-t">Privaatsusküsimuste kohta: photocheck.ee</div></div>
+  {% endif %}
+</div>
+{% endblock %}

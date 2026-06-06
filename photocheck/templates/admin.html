@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Admin — PhotoCheck{% endblock %}
+{% block head %}
+<style>
+.wrap{max-width:880px;margin:0 auto;padding:28px 16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px}
+.sb{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:18px;text-align:center}
+.sn{font-size:28px;font-weight:700;font-family:var(--mono);color:var(--accent2)}.sl{font-size:11px;color:var(--muted);margin-top:3px}
+.sec{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:18px;margin-bottom:14px}
+.sec h3{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{color:var(--muted);text-align:left;padding:5px 0;font-weight:600;border-bottom:1px solid var(--border)}
+td{padding:7px 0;border-bottom:1px solid var(--border)}tr:last-child td{border-bottom:none}
+</style>
+{% endblock %}
+{% block content %}
+<div class="wrap">
+  <h1 style="font-size:20px;font-weight:700;margin-bottom:20px">📊 Admin — PhotoCheck</h1>
+  <div class="grid">
+    <div class="sb"><div class="sn">{{ stats.total_visits or 0 }}</div><div class="sl">Total visits</div></div>
+    <div class="sb"><div class="sn">{{ visits_today }}</div><div class="sl">Today</div></div>
+    <div class="sb"><div class="sn">{{ visits_week }}</div><div class="sl">7 days</div></div>
+    <div class="sb"><div class="sn">{{ users }}</div><div class="sl">Users</div></div>
+    <div class="sb"><div class="sn">{{ analyses }}</div><div class="sl">Analyses</div></div>
+  </div>
+  <div class="sec">
+    <h3>Languages</h3>
+    <table><tr><th>Lang</th><th>Visits</th></tr>
+    {% for l in langs %}<tr><td style="font-family:var(--mono)">{{ l.lang }}</td><td style="color:var(--accent2);font-family:var(--mono)">{{ l.n }}</td></tr>{% endfor %}
+    </table>
+  </div>
+  <div class="sec">
+    <h3>Top pages</h3>
+    <table><tr><th>Path</th><th>Visits</th></tr>
+    {% for p in top_pages %}<tr><td>{{ p.path }}</td><td style="color:var(--accent2);font-family:var(--mono)">{{ p.n }}</td></tr>{% endfor %}
+    </table>
+  </div>
+  <div class="sec">
+    <h3>Recent users</h3>
+    <table><tr><th>Name</th><th>Email</th><th>Lang</th><th>Date</th><th>Checks</th></tr>
+    {% for u in recent_users %}
+    <tr><td>{{ u.name }}</td><td style="color:var(--muted)">{{ u.email }}</td><td style="font-family:var(--mono)">{{ u.lang }}</td><td style="font-family:var(--mono);font-size:11px">{{ u.created_at[:10] }}</td><td style="color:var(--accent2);font-family:var(--mono)">{{ u.analyses_count }}</td></tr>
+    {% endfor %}
+    </table>
+  </div>
+</div>
+{% endblock %}

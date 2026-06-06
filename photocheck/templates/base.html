@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#060910">
+<title>{% block title %}PhotoCheck{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060910;--bg2:#0b0f1a;--card:#0f1422;
+  --border:#1a2035;--border2:#253050;
+  --text:#edf0f7;--muted:#5a6785;
+  --accent:#2563eb;--accent2:#3b82f6;--accent3:#60a5fa;
+  --green:#10b981;--yellow:#f59e0b;--red:#ef4444;--purple:#8b5cf6;
+  --font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;line-height:1.6}
+
+nav{
+  position:sticky;top:0;z-index:100;
+  background:rgba(6,9,16,0.92);backdrop-filter:blur(24px);
+  border-bottom:1px solid var(--border);
+  height:56px;display:flex;align-items:center;
+  padding:0 24px;gap:16px;
+}
+.nav-logo{display:flex;align-items:center;gap:9px;text-decoration:none;color:var(--text);flex-shrink:0}
+.nav-logo-mark{width:30px;height:30px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.nav-logo-name{font-size:15px;font-weight:700;letter-spacing:-0.3px}
+.nav-center{flex:1;display:flex;align-items:center;justify-content:center;gap:4px}
+.nav-link{color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;padding:5px 11px;border-radius:6px;transition:all 0.15s}
+.nav-link:hover{color:var(--text);background:var(--card)}
+.nav-right{display:flex;align-items:center;gap:8px}
+.lang-switch{display:flex;gap:2px;background:var(--card);border-radius:7px;padding:3px}
+.lang-btn{padding:4px 8px;border-radius:5px;font-size:12px;font-weight:600;color:var(--muted);text-decoration:none;transition:all 0.15s;font-family:var(--mono)}
+.lang-btn.active{background:var(--border2);color:var(--text)}
+.lang-btn:hover{color:var(--text)}
+.btn{padding:7px 15px;border-radius:7px;font-size:13px;font-weight:600;text-decoration:none;transition:all 0.15s;display:inline-flex;align-items:center;gap:6px;border:none;cursor:pointer;font-family:var(--font)}
+.btn-primary{background:var(--accent);color:white}
+.btn-primary:hover{background:var(--accent2)}
+
+main{position:relative}
+footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;color:var(--muted);font-size:13px;margin-top:60px}
+footer a{color:var(--muted);text-decoration:none}
+footer a:hover{color:var(--accent)}
+.ad-slot{background:var(--card);border:1px dashed var(--border2);border-radius:10px;padding:18px;text-align:center;color:var(--muted);font-size:11px;font-family:var(--mono);margin:16px 0}
+
+/* Cookie banner */
+.cookie-banner{
+  position:fixed;bottom:0;left:0;right:0;z-index:999;
+  background:var(--card);border-top:1px solid var(--border2);
+  padding:14px 24px;display:flex;align-items:center;
+  justify-content:space-between;gap:16px;flex-wrap:wrap;
+}
+.cookie-text{font-size:13px;color:var(--muted);flex:1}
+.cookie-text a{color:var(--accent3);text-decoration:none}
+.cookie-btn{padding:7px 18px;border-radius:7px;background:var(--accent);color:white;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);flex-shrink:0}
+
+/* Upload warning modal */
+.modal-overlay{
+  position:fixed;inset:0;z-index:998;
+  background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.modal-box{
+  background:var(--card);border:1px solid var(--border2);
+  border-radius:16px;padding:28px;max-width:480px;width:100%;
+}
+.modal-title{font-size:17px;font-weight:700;margin-bottom:12px;color:var(--yellow)}
+.modal-text{font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:20px}
+.modal-btns{display:flex;gap:10px;flex-wrap:wrap}
+.modal-btn-accept{flex:1;padding:11px;border-radius:8px;background:var(--accent);color:white;border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font)}
+.modal-btn-decline{flex:1;padding:11px;border-radius:8px;background:transparent;color:var(--muted);border:1px solid var(--border2);font-size:14px;cursor:pointer;font-family:var(--font)}
+
+@media(max-width:600px){.nav-center{display:none}.lang-switch .lang-btn{padding:4px 6px}}
+</style>
+{% block head %}{% endblock %}
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="/">
+    <div class="nav-logo-mark">✓</div>
+    <span class="nav-logo-name">PhotoCheck</span>
+  </a>
+  <div class="nav-center">
+    <a class="nav-link" href="/tool">{{ t.nav_tool }}</a>
+    <a class="nav-link" href="/privacy" style="font-size:13px">{{ t.privacy_title }}</a>
+  </div>
+  <div class="nav-right">
+    <div class="lang-switch">
+      <a class="lang-btn {% if lang=='ru' %}active{% endif %}" href="/set-lang/ru">RU</a>
+      <a class="lang-btn {% if lang=='en' %}active{% endif %}" href="/set-lang/en">EN</a>
+      <a class="lang-btn {% if lang=='et' %}active{% endif %}" href="/set-lang/et">ET</a>
+    </div>
+    <a class="btn btn-primary" href="/tool">{{ t.cta_primary }}</a>
+  </div>
+</nav>
+
+<main>{% block content %}{% endblock %}</main>
+
+<footer>
+  <div>© 2025 PhotoCheck &nbsp;·&nbsp; <a href="/">Home</a> &nbsp;·&nbsp; <a href="/tool">{{ t.nav_tool }}</a> &nbsp;·&nbsp; <a href="/privacy">{{ t.privacy_title }}</a></div>
+  <div style="margin-top:4px;font-size:11px">{{ t.footer_desc }}</div>
+</footer>
+
+<!-- Cookie banner -->
+<div class="cookie-banner" id="cookieBanner" style="display:none">
+  <div class="cookie-text">
+    {{ t.cookie_text }} <a href="/privacy">{{ t.privacy_title }}</a>
+  </div>
+  <button class="cookie-btn" onclick="acceptCookie()">{{ t.cookie_ok }}</button>
+</div>
+
+<script>
+// Cookie banner
+if (!localStorage.getItem('cookie_ok')) {
+  document.getElementById('cookieBanner').style.display = 'flex';
+}
+function acceptCookie() {
+  localStorage.setItem('cookie_ok', '1');
+  document.getElementById('cookieBanner').style.display = 'none';
+}
+</script>
+
+</body>
+</html>

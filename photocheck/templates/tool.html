@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+{% block title %}{{ t.tool_title }} — PhotoCheck{% endblock %}
+{% block head %}
+<style>
+.wrap{max-width:760px;margin:0 auto;padding:28px 16px}
+.tool-h{font-size:22px;font-weight:700;margin-bottom:4px}
+.tool-sub{color:var(--muted);font-size:14px;margin-bottom:20px}
+.upload-zone{border:2px dashed var(--border2);border-radius:14px;padding:44px 20px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative;background:var(--card)}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--accent);background:rgba(37,99,235,0.05)}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-icon{font-size:40px;margin-bottom:12px}
+.upload-zone h2{font-size:16px;font-weight:600;margin-bottom:5px}
+.upload-zone p{color:var(--muted);font-size:13px}
+.prev-wrap{display:none;margin-top:14px;border-radius:11px;overflow:hidden;position:relative}
+.prev-wrap img{width:100%;max-height:260px;object-fit:cover;display:block}
+.prev-rm{position:absolute;top:9px;right:9px;background:rgba(0,0,0,0.7);border:none;color:white;border-radius:50%;width:28px;height:28px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.chips{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.chip{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:6px 13px;font-size:13px;cursor:pointer;transition:all 0.15s;user-select:none}
+.chip.active{border-color:var(--accent);color:var(--accent);background:rgba(37,99,235,0.08)}
+.btn-go{width:100%;margin-top:12px;padding:14px;background:var(--accent);color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:7px}
+.btn-go:hover{background:var(--accent2)}
+.btn-go:disabled{opacity:0.4;cursor:not-allowed}
+.prog-card{display:none;margin-top:14px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px}
+.prog-lbl{font-size:13px;color:var(--muted);margin-bottom:9px}
+.prog-bg{background:var(--border);border-radius:3px;height:4px;overflow:hidden}
+.prog-fill{height:100%;background:var(--accent);border-radius:3px;transition:width 0.35s;width:0%}
+.results{display:none;margin-top:20px}
+.trust-card{border-radius:12px;padding:18px 22px;display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.trust-card.high{background:rgba(16,185,129,0.09);border:1px solid rgba(16,185,129,0.22)}
+.trust-card.medium{background:rgba(245,158,11,0.09);border:1px solid rgba(245,158,11,0.22)}
+.trust-card.low{background:rgba(239,68,68,0.09);border:1px solid rgba(239,68,68,0.22)}
+.trust-card.unknown{background:var(--card);border:1px solid var(--border)}
+.trust-em{font-size:34px}.trust-lbl{font-size:17px;font-weight:700}
+.tabs{display:flex;gap:2px;background:var(--card);border-radius:9px;padding:3px;margin-bottom:14px;overflow-x:auto}
+.tab{flex:1;min-width:60px;padding:7px 4px;text-align:center;font-size:12px;color:var(--muted);border-radius:6px;cursor:pointer;white-space:nowrap;border:none;background:none;font-family:var(--font);font-weight:600;transition:all 0.15s}
+.tab.active{background:var(--border2);color:var(--text)}
+.tp{display:none}.tp.active{display:block}
+.rc{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:15px;margin-bottom:11px}
+.rt{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:11px}
+.sr{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.sl{font-size:13px;color:var(--muted);min-width:140px}
+.sb{flex:1;background:var(--border);border-radius:3px;height:5px}
+.sf{height:100%;border-radius:3px;transition:width 0.5s}
+.sv{font-size:12px;font-family:var(--mono);min-width:32px;text-align:right}
+.mr{display:flex;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px;gap:10px}
+.mr:last-child{border-bottom:none}
+.mk{color:var(--muted);min-width:120px;flex-shrink:0}
+.fl2{font-size:13px;padding:4px 0}
+.fl2.red{color:var(--red)}.fl2.green{color:var(--green)}.fl2.yellow{color:var(--yellow)}
+.mi{background:var(--bg2);border-radius:7px;padding:9px 11px;margin-bottom:7px}
+.ms{font-size:11px;font-weight:700;color:var(--accent)}
+.mu{font-size:11px;color:var(--muted);word-break:break-all;margin-top:3px}
+.mu a{color:var(--accent2);text-decoration:none}
+.ela-img{width:100%;border-radius:7px;margin-top:9px}
+.gps-w{text-align:center}.gps-c{font-size:11px;font-family:var(--mono);color:var(--muted)}
+.gps-a{font-size:14px;margin:5px 0 10px}
+.gps-btns{display:flex;gap:7px;justify-content:center;flex-wrap:wrap}
+.gps-btn{padding:6px 12px;border-radius:7px;font-size:12px;border:1px solid var(--border2);background:var(--bg);color:var(--text);text-decoration:none;transition:all 0.15s}
+.gps-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* Upload warning */
+.upload-notice{
+  background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);
+  border-radius:10px;padding:12px 14px;margin-bottom:16px;
+  font-size:13px;color:var(--yellow);line-height:1.6;
+  display:flex;gap:10px;align-items:flex-start;
+}
+.upload-notice-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+</style>
+{% endblock %}
+{% block content %}
+<div class="wrap">
+  <div class="tool-h">{{ t.tool_title }}</div>
+  <div class="tool-sub">{{ t.tool_sub }}</div>
+
+  <div class="ad-slot">[ {{ t.ad_label }} 728×90 — Google AdSense ]</div>
+
+  <!-- Upload warning notice -->
+  <div class="upload-notice" id="uploadNotice">
+    <div class="upload-notice-icon">⚠️</div>
+    <div>{{ t.upload_warning_text }}</div>
+  </div>
+
+  <div class="upload-zone" id="uz">
+    <input type="file" id="fi" accept="image/*" capture="environment">
+    <div class="upload-icon">📷</div>
+    <h2>{{ t.upload_title }}</h2>
+    <p>{{ t.upload_sub }}</p>
+  </div>
+  <div class="prev-wrap" id="pw">
+    <img id="pi" src="" alt="">
+    <button class="prev-rm" id="rm">✕</button>
+  </div>
+  <div class="chips">
+    <div class="chip active" id="cExt">{{ t.chip_ext }}</div>
+    <div class="chip" id="cFull">{{ t.chip_full }}</div>
+  </div>
+  <button class="btn-go" id="goBtn" disabled>{{ t.btn_analyze }}</button>
+
+  <div class="prog-card" id="pc">
+    <div class="prog-lbl" id="pl">...</div>
+    <div class="prog-bg"><div class="prog-fill" id="pf"></div></div>
+  </div>
+
+  <div class="results" id="res">
+    <div class="trust-card" id="tc"><div class="trust-em" id="te">⚪</div><div><div class="trust-lbl" id="tl">—</div></div></div>
+    <div class="tabs">
+      <button class="tab active" onclick="st('sum',this)">{{ t.tab_summary }}</button>
+      <button class="tab" onclick="st('meta',this)">{{ t.tab_meta }}</button>
+      <button class="tab" onclick="st('for',this)">{{ t.tab_forensics }}</button>
+      <button class="tab" onclick="st('net',this)">{{ t.tab_internet }}</button>
+      <button class="tab" onclick="st('ai',this)">{{ t.tab_ai }}</button>
+    </div>
+    <div class="tp active" id="tp-sum">
+      <div class="rc"><div class="rt">{{ t.tab_summary }}</div><div id="sb"></div></div>
+      <div class="rc" id="rc-red" style="display:none"><div class="rt">⚠️</div><div id="rl"></div></div>
+      <div class="rc" id="rc-auth" style="display:none"><div class="rt">✅</div><div id="al"></div></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:8px">⚠️ {{ t.disclaimer }}</div>
+    </div>
+    <div class="tp" id="tp-meta">
+      <div class="rc"><div class="rt">EXIF</div><div id="mt"></div></div>
+      <div class="rc" id="rc-gps" style="display:none"><div class="rt">📍 GPS</div><div class="gps-w"><div class="gps-c" id="gc"></div><div class="gps-a" id="ga"></div><div class="gps-btns" id="gb"></div></div></div>
+    </div>
+    <div class="tp" id="tp-for">
+      <div class="rc"><div class="rt">{{ t.tab_forensics }}</div><div id="ft"></div></div>
+      <div class="rc" id="rc-manip" style="display:none"><div class="rt">⚠️</div><div id="ml"></div></div>
+      <div class="rc" id="rc-ela" style="display:none"><div class="rt">ELA</div><div id="el"></div><img class="ela-img" id="ei" src="" style="display:none"></div>
+      <div class="rc"><div class="rt">{% if lang=='ru' %}Хэши{% elif lang=='en' %}Hashes{% else %}Räsid{% endif %}</div><div id="ht"></div></div>
+    </div>
+    <div class="tp" id="tp-net">
+      <div class="rc"><div class="rt">{{ t.tab_internet }}</div><div id="nl"></div></div>
+    </div>
+    <div class="tp" id="tp-ai">
+      <div class="rc"><div class="rt">AI</div><div id="ao"></div></div>
+      <div class="rc" id="rc-aisvc" style="display:none"><div class="rt">{% if lang=='ru' %}Сервисы{% elif lang=='en' %}Services{% else %}Teenused{% endif %}</div><div id="as"></div></div>
+    </div>
+    <div class="ad-slot">[ {{ t.ad_label }} 300×250 — Google AdSense ]</div>
+  </div>
+</div>
+
+<!-- Upload warning modal -->
+<div class="modal-overlay" id="warnModal" style="display:none">
+  <div class="modal-box">
+    <div class="modal-title">{{ t.upload_warning_title }}</div>
+    <div class="modal-text">{{ t.upload_warning_text }}</div>
+    <div class="modal-btns">
+      <button class="modal-btn-accept" onclick="acceptWarning()">{{ t.upload_warning_accept }}</button>
+      <button class="modal-btn-decline" onclick="declineWarning()">{{ t.upload_warning_decline }}</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let sf=null, warnShown=localStorage.getItem('warn_ok');
+const fi=document.getElementById('fi'),uz=document.getElementById('uz'),pw=document.getElementById('pw'),goBtn=document.getElementById('goBtn');
+
+// Hide inline notice if already accepted
+if(warnShown) document.getElementById('uploadNotice').style.display='none';
+
+fi.addEventListener('change',e=>{if(e.target.files[0])pick(e.target.files[0])});
+uz.addEventListener('dragover',e=>{e.preventDefault();uz.classList.add('drag-over')});
+uz.addEventListener('dragleave',()=>uz.classList.remove('drag-over'));
+uz.addEventListener('drop',e=>{e.preventDefault();uz.classList.remove('drag-over');if(e.dataTransfer.files[0])pick(e.dataTransfer.files[0])});
+document.getElementById('rm').addEventListener('click',()=>{sf=null;pw.style.display='none';uz.style.display='block';goBtn.disabled=true;fi.value='';document.getElementById('res').style.display='none'});
+
+function pick(f){sf=f;const r=new FileReader();r.onload=ev=>{document.getElementById('pi').src=ev.target.result;pw.style.display='block';uz.style.display='none';goBtn.disabled=false};r.readAsDataURL(f)}
+
+const cE=document.getElementById('cExt'),cF=document.getElementById('cFull');
+cE.addEventListener('click',()=>cE.classList.toggle('active'));
+cF.addEventListener('click',()=>cF.classList.toggle('active'));
+
+function st(n,b){document.querySelectorAll('.tp').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.getElementById('tp-'+n).classList.add('active');b.classList.add('active')}
+
+function acceptWarning(){localStorage.setItem('warn_ok','1');document.getElementById('warnModal').style.display='none';document.getElementById('uploadNotice').style.display='none';doAnalyze()}
+function declineWarning(){cE.classList.remove('active');document.getElementById('warnModal').style.display='none';doAnalyze()}
+
+goBtn.addEventListener('click',()=>{
+  if(!sf)return;
+  // Show warning modal if external is on and not yet accepted
+  if(cE.classList.contains('active') && !localStorage.getItem('warn_ok')){
+    document.getElementById('warnModal').style.display='flex';
+    return;
+  }
+  doAnalyze();
+});
+
+async function doAnalyze(){
+  if(!sf)return;
+  document.getElementById('res').style.display='none';
+  document.getElementById('pc').style.display='block';
+  goBtn.disabled=true;prog('...',5);
+  const fd=new FormData();fd.append('image',sf);
+  fd.append('mode',cF.classList.contains('active')?'full':'fast');
+  fd.append('allow_external',cE.classList.contains('active')?'true':'false');
+  let p=5;
+  const tm=setInterval(()=>{p=Math.min(p+4,88);prog('...',p)},700);
+  try{
+    const r=await fetch('/analyze',{method:'POST',body:fd});
+    clearInterval(tm);prog('✓',100);
+    if(!r.ok){const e=await r.json();alert(e.error||r.statusText);return}
+    const d=await r.json();
+    setTimeout(()=>{document.getElementById('pc').style.display='none';render(d)},350);
+  }catch(e){clearInterval(tm);alert(e.message)}finally{goBtn.disabled=false}
+}
+
+function prog(l,p){document.getElementById('pl').textContent=l;document.getElementById('pf').style.width=p+'%'}
+
+function render(d){
+  document.getElementById('res').style.display='block';
+  st('sum',document.querySelectorAll('.tab')[0]);
+  rRisk(d.risk);rMeta(d.metadata);rFor(d.forensics,d.hashes);rNet(d.reverse_search);rAI(d.ai_detection);
+}
+
+function rRisk(r){
+  if(!r)return;
+  document.getElementById('tc').className='trust-card '+r.level;
+  document.getElementById('te').textContent={high:'🟢',medium:'🟡',low:'🔴',unknown:'⚪'}[r.level]||'⚪';
+  document.getElementById('tl').textContent=r.label;
+  const bars=[{l:'{% if lang=="ru" %}Интернет{% elif lang=="en" %}Internet{% else %}Internet{% endif %}',v:r.internet_provenance,c:'#3b82f6'},
+    {l:'{% if lang=="ru" %}Метаданные{% elif lang=="en" %}Metadata{% else %}Metaandmed{% endif %}',v:r.metadata_confidence,c:'#10b981'},
+    {l:'AI',v:r.ai_suspicion,c:'#ef4444'},
+    {l:'{% if lang=="ru" %}Монтаж{% elif lang=="en" %}Editing{% else %}Montaaž{% endif %}',v:r.manipulation_suspicion,c:'#f59e0b'},
+    {l:'GPS',v:r.geolocation_confidence,c:'#8b5cf6'}];
+  document.getElementById('sb').innerHTML=bars.map(b=>`<div class="sr"><div class="sl">${b.l}</div><div class="sb"><div class="sf" style="width:${b.v}%;background:${b.c}"></div></div><div class="sv" style="color:${b.c}">${b.v}%</div></div>`).join('');
+  if(r.red_flags?.length){document.getElementById('rc-red').style.display='block';document.getElementById('rl').innerHTML=r.red_flags.map(f=>`<div class="fl2 red">⚠️ ${esc(f)}</div>`).join('')}
+  if(r.authenticity_arguments?.length){document.getElementById('rc-auth').style.display='block';document.getElementById('al').innerHTML=r.authenticity_arguments.map(f=>`<div class="fl2 green">✓ ${esc(f)}</div>`).join('')}
+}
+function rMeta(m){
+  if(!m){document.getElementById('mt').innerHTML='<div style="color:var(--muted);font-size:13px">—</div>';return}
+  const rows=[['{% if lang=="ru" %}Камера{% elif lang=="en" %}Camera{% else %}Kaamera{% endif %}',[m.camera_make,m.camera_model].filter(Boolean).join(' ')],
+    ['{% if lang=="ru" %}ПО{% elif lang=="en" %}Software{% else %}Tarkvara{% endif %}',m.software],
+    ['{% if lang=="ru" %}Дата съёмки{% elif lang=="en" %}Date taken{% else %}Kuupäev{% endif %}',m.datetime_original],
+    ['ISO',m.iso],['{% if lang=="ru" %}Выдержка{% elif lang=="en" %}Shutter{% else %}Säriaeg{% endif %}',m.shutter_speed],
+    ['{% if lang=="ru" %}Редактор{% elif lang=="en" %}Editor{% else %}Redaktor{% endif %}',m.editing_software]].filter(([k,v])=>v);
+  document.getElementById('mt').innerHTML=rows.length?rows.map(([k,v])=>`<div class="mr"><div class="mk">${k}</div><div>${esc(String(v))}</div></div>`).join(''):'<div style="color:var(--muted);font-size:13px">—</div>';
+  if(m.gps){document.getElementById('rc-gps').style.display='block';document.getElementById('gc').textContent=`${m.gps.latitude?.toFixed(5)}, ${m.gps.longitude?.toFixed(5)}`;document.getElementById('ga').textContent=m.gps.address||'';document.getElementById('gb').innerHTML=`<a href="${m.gps.osm_url}" target="_blank" class="gps-btn">🗺 OSM</a><a href="${m.gps.gmaps_url}" target="_blank" class="gps-btn">📍 Maps</a>`}
+}
+function rFor(f,h){
+  if(f){
+    const rows=[['{% if lang=="ru" %}Формат{% elif lang=="en" %}Format{% else %}Formaat{% endif %}',f.format],['{% if lang=="ru" %}Размер{% elif lang=="en" %}Size{% else %}Suurus{% endif %}',`${f.width}×${f.height}`],['{% if lang=="ru" %}Файл{% elif lang=="en" %}File{% else %}Fail{% endif %}',`${f.file_size_kb} KB`]].filter(([k,v])=>v);
+    document.getElementById('ft').innerHTML=rows.map(([k,v])=>`<div class="mr"><div class="mk">${k}</div><div>${esc(String(v))}</div></div>`).join('');
+    if(f.manipulation_flags?.length){document.getElementById('rc-manip').style.display='block';document.getElementById('ml').innerHTML=f.manipulation_flags.map(fl=>`<div class="fl2 red">⚠️ ${esc(fl)}</div>`).join('')}
+    if(f.ela){document.getElementById('rc-ela').style.display='block';document.getElementById('el').innerHTML=`<div class="mr"><div class="mk">{% if lang=="ru" %}Подозр.{% elif lang=="en" %}Suspicious{% else %}Kahtlane{% endif %}</div><div>${f.ela.suspicious_percent}%</div></div>${f.ela.notes.map(n=>`<div class="fl2 yellow">⚠️ ${esc(n)}</div>`).join('')}`;if(f.ela.image_path){const ei=document.getElementById('ei');ei.src='/ela_image?path='+encodeURIComponent(f.ela.image_path);ei.style.display='block'}}
+  }
+  if(h){document.getElementById('ht').innerHTML=[['pHash',h.phash],['MD5',h.md5],['SHA-256',h.sha256?h.sha256.substring(0,24)+'…':null]].filter(([k,v])=>v).map(([k,v])=>`<div class="mr"><div class="mk">${k}</div><div style="font-family:var(--mono);font-size:11px">${esc(v)}</div></div>`).join('')+(h.duplicate_found?`<div class="fl2 yellow">⚠️ {% if lang=="ru" %}Дубликат{% elif lang=="en" %}Duplicate{% else %}Duplikaat{% endif %} (${h.duplicate_similarity}%)</div>`:'')}
+}
+function rNet(rs){
+  if(!rs||!rs.matches?.length){document.getElementById('nl').innerHTML='<div style="color:var(--muted);font-size:13px">—</div>';return}
+  document.getElementById('nl').innerHTML=rs.matches.map(m=>{const sc=m.error?'var(--red)':m.found?'var(--green)':'var(--muted)';const st=m.error?`⚠️ ${esc(m.error)}`:m.found?'✓':'—';return`<div class="mi"><div style="display:flex;justify-content:space-between"><div class="ms">${esc(m.service)}</div><div style="font-size:12px;color:${sc}">${st}</div></div>${m.url?`<div class="mu"><a href="${m.url}" target="_blank">${esc(m.url.substring(0,70))}…</a></div>`:''}</div>`}).join('')
+}
+function rAI(ai){
+  if(!ai){document.getElementById('ao').innerHTML='<div style="color:var(--muted);font-size:13px">—</div>';return}
+  const c=ai.score>60?'var(--red)':ai.score>30?'var(--yellow)':'var(--green)';
+  document.getElementById('ao').innerHTML=`<div style="font-size:14px;font-weight:600;margin-bottom:9px">${esc(ai.overall)}</div><div class="sr"><div class="sl">AI %</div><div class="sb"><div class="sf" style="width:${ai.score}%;background:${c}"></div></div><div class="sv" style="color:${c}">${ai.score}%</div></div>`;
+  if(ai.services?.length){document.getElementById('rc-aisvc').style.display='block';document.getElementById('as').innerHTML=ai.services.map(s=>`<div class="mi"><div class="ms">${esc(s.service)}</div>${s.error?`<div style="color:var(--red);font-size:12px">⚠️ ${esc(s.error)}</div>`:''}${s.verdict?`<div style="font-size:12px;margin-top:3px">${esc(s.verdict)}</div>`:''}${s.probability!=null?`<div style="font-size:11px;color:var(--muted)">AI: ${s.probability}%</div>`:''}</div>`).join('')}
+}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+</script>
+{% endblock %}

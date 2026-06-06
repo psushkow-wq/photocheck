@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}{{ t.profile_title }} — PhotoCheck{% endblock %}
+{% block head %}
+<style>
+.wrap{max-width:660px;margin:0 auto;padding:28px 16px}
+.pc{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:16px;display:flex;align-items:center;gap:16px}
+.av{width:56px;height:56px;border-radius:13px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:white;flex-shrink:0}
+.pn{font-size:18px;font-weight:700}.pe{color:var(--muted);font-size:13px;margin-top:2px}.pd{color:var(--muted);font-size:11px;font-family:var(--mono);margin-top:5px}
+.sr{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.sb2{flex:1;min-width:110px;background:var(--card);border:1px solid var(--border);border-radius:11px;padding:16px;text-align:center}
+.sn{font-size:26px;font-weight:700;font-family:var(--mono);color:var(--accent2)}.sl{font-size:12px;color:var(--muted);margin-top:3px}
+.ht{font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px}
+.hi{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px}
+.hi:last-child{border-bottom:none}
+.badge{padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700}
+.badge.high{background:rgba(16,185,129,0.12);color:var(--green)}
+.badge.medium{background:rgba(245,158,11,0.12);color:var(--yellow)}
+.badge.low{background:rgba(239,68,68,0.12);color:var(--red)}
+.badge.unknown{background:var(--border);color:var(--muted)}
+</style>
+{% endblock %}
+{% block content %}
+<div class="wrap">
+  <div class="pc">
+    <div class="av">{{ user.name[0].upper() }}</div>
+    <div>
+      <div class="pn">{{ user.name }}</div>
+      <div class="pe">{{ user.email }}</div>
+      <div class="pd">{{ user.created_at[:10] }}</div>
+    </div>
+  </div>
+  <div class="sr">
+    <div class="sb2"><div class="sn">{{ user.analyses_count }}</div><div class="sl">{{ t.checks_done }}</div></div>
+    <div class="sb2"><div class="sn" style="font-size:14px">{{ user.last_login[:10] if user.last_login else '—' }}</div><div class="sl">{{ t.last_login }}</div></div>
+  </div>
+  {% if analyses %}
+  <div class="ht">{{ t.history_title }}</div>
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:11px;padding:4px 14px">
+    {% for a in analyses %}
+    <div class="hi">
+      <span>{{ a.filename or '—' }}</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="badge {{ a.trust_level or 'unknown' }}">{{ {'high':t.badge_high,'medium':t.badge_medium,'low':t.badge_low}.get(a.trust_level,'—') }}</span>
+        <span style="color:var(--muted);font-size:11px;font-family:var(--mono)">{{ a.created_at[:10] }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="text-align:center;padding:40px;color:var(--muted);font-size:14px">
+    {{ t.no_history }} <a href="/tool" style="color:var(--accent);text-decoration:none">{{ t.try_tool }}</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

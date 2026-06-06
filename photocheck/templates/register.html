@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}{{ t.register_title }} — PhotoCheck{% endblock %}
+{% block head %}
+<style>
+.auth-wrap{min-height:calc(100vh - 56px);display:flex;align-items:center;justify-content:center;padding:40px 16px}
+.auth-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:36px;width:100%;max-width:400px}
+.auth-h{font-size:22px;font-weight:700;margin-bottom:4px}
+.auth-sub{color:var(--muted);font-size:14px;margin-bottom:28px}
+.fg{margin-bottom:16px}
+.fl{font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:5px}
+.fi{width:100%;padding:11px 13px;border-radius:8px;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-size:14px;font-family:var(--font);outline:none;transition:border 0.15s}
+.fi:focus{border-color:var(--accent)}
+.fi::placeholder{color:var(--muted)}
+.bs{width:100%;padding:13px;border-radius:8px;background:var(--accent);color:white;font-size:14px;font-weight:600;border:none;cursor:pointer;font-family:var(--font);transition:all 0.15s;margin-top:6px}
+.bs:hover{background:var(--accent2)}
+.af{text-align:center;margin-top:16px;font-size:13px;color:var(--muted)}
+.af a{color:var(--accent);text-decoration:none}
+</style>
+{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-box">
+    <div class="auth-h">{{ t.register_title }}</div>
+    <div class="auth-sub">{{ t.register_sub }}</div>
+    <form method="POST">
+      <div class="fg"><label class="fl">{{ t.field_name }}</label><input class="fi" type="text" name="name" placeholder="{{ t.name_placeholder }}" required></div>
+      <div class="fg"><label class="fl">{{ t.field_email }}</label><input class="fi" type="email" name="email" placeholder="{{ t.email_placeholder }}" required></div>
+      <div class="fg"><label class="fl">{{ t.field_password }}</label><input class="fi" type="password" name="password" placeholder="{{ t.pass_placeholder }}" required></div>
+      <div class="fg"><label class="fl">{{ t.field_confirm }}</label><input class="fi" type="password" name="confirm" placeholder="{{ t.confirm_placeholder }}" required></div>
+      <button class="bs" type="submit">{{ t.btn_register }}</button>
+    </form>
+    <div class="af">{{ t.have_account }} <a href="/login">{{ t.login_link }}</a></div>
+  </div>
+</div>
+{% endblock %}
