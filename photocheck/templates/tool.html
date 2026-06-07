@@ -206,7 +206,7 @@ async function doAnalyze(){
 function prog(l,p){document.getElementById('pl').textContent=l;document.getElementById('pf').style.width=p+'%'}
 
 function render(d){
-  document.getElementById('res').style.display='block';
+  document.getElementById('res').style.display='block'; document.getElementById('res').scrollIntoView({behavior:'smooth'});
   st('sum',document.querySelectorAll('.tab')[0]);
   rRisk(d.risk);rMeta(d.metadata);rFor(d.forensics,d.hashes);rNet(d.reverse_search);rAI(d.ai_detection);
 }
