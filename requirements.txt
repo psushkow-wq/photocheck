@@ -1,6 +1,5 @@
 flask>=3.0.0
 pillow
-opencv-python-headless
 imagehash
 numpy
 piexif
@@ -9,4 +8,3 @@ python-dotenv
 geopy
 tqdm
 scipy
-weasyprint
