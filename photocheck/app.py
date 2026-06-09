@@ -242,6 +242,8 @@ def analyze():
         inc_stat("total_analyses")
         return jsonify(_serialize(result, g.lang))
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
     finally:
         if tmp.exists():
